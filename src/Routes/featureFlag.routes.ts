@@ -1,0 +1,40 @@
+import { Router } from 'express';
+import type { default as IFeatureFlagService } from '../Service/IFeatureFlag.service.js';
+import type { default as FeatureFlagController } from '../Controller/FeatureFlag.controller.js';
+import { exceptionHandler } from '../Middleware/exceptionHandler.middleware.js';
+
+export const createFeatureFlagRoutes = (
+  service: IFeatureFlagService,
+  controller: FeatureFlagController
+): Router => {
+  const router = Router();
+
+  // POST /flags - Create a new feature flag
+  router.post('/flags', controller.createFlag.bind(controller));
+
+  // GET /flags - List all feature flags for an environment
+  // Requires query param: environment
+  router.get('/flags', controller.listFlags.bind(controller));
+
+  // GET /flags/:key - Get a specific feature flag
+  // Requires query param: environment
+  router.get('/flags/:key', controller.getFlagByEnvironment.bind(controller));
+
+
+
+
+  // PUT /flags/:key - Update a feature flag
+  // Requires query param: environment
+  // router.put('/flags/:key', controller.updateFlag?.bind(controller));
+
+  // DELETE /flags/:key - Delete a feature flag
+  // Requires query param: environment
+  router.delete('/flags/:key', controller.deleteFlag?.bind(controller));
+
+  // Apply exception handler to all routes
+  router.use(exceptionHandler);
+
+  return router;
+};
+
+export default createFeatureFlagRoutes;
