@@ -22,8 +22,11 @@
   "dependencies": {
     "@neondatabase/serverless": "^1.0.2",
     "@prisma/client": "^5.22.0",
+    "@types/winston": "^2.4.4",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
-    "prisma": "^5.22.0"
+    "prisma": "^5.22.0",
+    "uuid": "^13.0.0",
+    "winston": "^3.19.0"
   }
 }

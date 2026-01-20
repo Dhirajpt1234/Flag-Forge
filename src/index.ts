@@ -7,6 +7,7 @@ import FeatureFlagService from './Service/concrete/FeatureFlag.service.js';
 import FeatureFlagController from './Controller/FeatureFlag.controller.js';
 import FeatureFlagRepository from './Repository/concrete/FeatureFlag.repository.js';
 import AuditService from './Service/concrete/Audit.service.js';
+import logger from './Utils/logger.util.js'
 
 // Load environment variables
 dotenv.config();
@@ -27,5 +28,5 @@ app.use('/api/feature-flags', featureFlagRoutes);
 
 // Start server
 app.listen(PORT, async () => {
-  console.log(`Server is running on port ${PORT}`);
+  logger.info(`Server is running on port ${PORT}`);
 });
