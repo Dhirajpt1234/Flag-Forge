@@ -5,3 +5,4 @@ npm-debug.log
 .DS_Store
 db.sql
 package-lock.json
+.env
