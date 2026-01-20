@@ -6,3 +6,4 @@ npm-debug.log
 db.sql
 package-lock.json
 .env
+logs

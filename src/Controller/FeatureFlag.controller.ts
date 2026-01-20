@@ -3,163 +3,129 @@ import type { default as IFeatureFlagService } from '../Service/IFeatureFlag.ser
 import type { default as CreateFeatureFlagDTO } from '../DTO/CreateFeatureFlagRequest.dto.js';
 import type { default as UpdateFeatureFlagDTO } from '../DTO/UpdateFeatureFlagRequest.dto.js';
 import environment from '../Enums/environment.js';
-import { ValidationError } from '../Middleware/exceptionHandler.middleware.js';
+import { ValidationError, asyncHandler } from '../Middleware/exceptionHandler.middleware.js';
 import logger from '../Utils/logger.util.js';
+import { sendSuccessResponse, sendErrorResponse } from '../Utils/ApiResponse.util.js';
 
 export default class FeatureFlagController {
   constructor(private featureFlagService: IFeatureFlagService) { }
 
-  async createFlag(req: Request, res: Response): Promise<void> {
-    try {
-      logger.info('Creating new feature flag', { key: req.body.key, name: req.body.name });
-      const dto: CreateFeatureFlagDTO = req.body;
+  createFlag = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+    logger.info('Creating new feature flag', { key: req.body.key, name: req.body.name });
+    const dto: CreateFeatureFlagDTO = req.body;
 
-      // Validate required fields
-      if (!dto.key || !dto.name) {
-        throw new ValidationError('Key and name are required fields');
-      }
-
-      if (dto.key.trim() === '' || dto.name.trim() === '') {
-        throw new ValidationError('Key and name cannot be empty');
-      }
-
-      const result = await this.featureFlagService.createFlag(dto);
-      logger.info('Feature flag created successfully', { key: dto.key });
-      res.status(201).json(result);
-    } catch (error) {
-      logger.error('Error creating feature flag', { error: error instanceof Error ? error.message : 'Unknown error', key: req.body.key });
-      res.status(400).json({ error: error instanceof Error ? error.message : 'Error creating flag' });
+    // Validate required fields
+    if (!dto.key || !dto.name) {
+      throw new ValidationError('Key and name are required fields');
     }
-  }
 
-  async listFlags(req: Request, res: Response): Promise<void> {
-    try {
-      logger.info('Fetching all feature flags');
-      // get the list of all flag for a users any environment.
-      const result = await this.featureFlagService.listFlags(environment.LOCAL);
-      logger.info('Feature flags retrieved successfully', { count: result.length });
-      res.json(result);
-    } catch (error) {
-      logger.error('Error fetching feature flags', { error: error instanceof Error ? error.message : 'Unknown error' });
-      res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
+    if (dto.key.trim() === '' || dto.name.trim() === '') {
+      throw new ValidationError('Key and name cannot be empty');
     }
-  }
 
-  async getFlagByEnvironment(req: Request, res: Response): Promise<void> {
-    try {
-      const { key } = req.params;
-      const keyStr: string = Array.isArray(key) ? (key[0] as string) : (key as string);
-      const { environment: env } = req.query;
+    const result = await this.featureFlagService.createFlag(dto);
 
-      logger.info('Fetching feature flag by environment', { key: keyStr, environment: env });
+    logger.info('Feature flag created successfully', { key: dto.key });
+    res.status(201).json(sendSuccessResponse('Feature flag created successfully', 201, result));
+  });
 
-      if (!keyStr || !env) {
-        res.status(400).json({ error: 'Key and environment are required' });
-        return;
-      }
+  listFlags = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+    logger.info('Fetching all feature flags');
 
-      const envStr: string = Array.isArray(env) ? (env[0] as string) : (env as string) || environment.LOCAL;
-      if (!Object.values(environment).includes(envStr as any)) {
-        res.status(400).json({ error: 'Invalid environment' });
-        return;
-      }
+    // get the list of all flag for a users any environment.
+    const result = await this.featureFlagService.listFlags(environment.LOCAL);
 
-      const result = await this.featureFlagService.getFlag(keyStr, envStr as typeof environment[keyof typeof environment]);
-      logger.info('Feature flag retrieved successfully', { key: keyStr, environment: envStr });
-      res.json(result);
-    } catch (error) {
-      logger.error('Error fetching feature flag', { error: error instanceof Error ? error.message : 'Flag not found', key: req.params.key, environment: req.query.environment });
-      res.status(404).json({ error: error instanceof Error ? error.message : 'Flag not found' });
+    logger.info('Feature flags retrieved successfully', { count: result.length });
+    res.json(sendSuccessResponse(`Retrieved ${result.length} feature flags`, 200, result, result.length));
+  });
+
+  getFlagByEnvironment = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+    const { key } = req.params;
+    const keyStr: string = Array.isArray(key) ? (key[0] as string) : (key as string);
+
+    const { environment: env } = req.query;
+    const envStr: string = Array.isArray(env) ? (env[0] as string) : (env as string) || environment.LOCAL;
+
+    logger.info('Fetching feature flag by environment', { key: keyStr, environment: env });
+
+    if (!keyStr || !env) {
+      throw new ValidationError('Key and environment are required');
     }
-  }
 
-  async updateFlag(req: Request, res: Response): Promise<void> {
-    try {
-      const { key } = req.params as { key: string }
-      const dto: UpdateFeatureFlagDTO = req.body;
-
-      logger.info('Updating feature flag', { key, updates: dto });
-
-      if (!key) {
-        res.status(400).json({ error: 'Key is required' });
-        return;
-      }
-
-      const result = await this.featureFlagService.updateFlag(key, dto);
-      logger.info('Feature flag updated successfully', { key });
-      res.json(result);
-    } catch (error) {
-      logger.error('Error updating feature flag', { error: error instanceof Error ? error.message : 'Flag not found', key: req.params.key });
-      res.status(404).json({ error: error instanceof Error ? error.message : 'Flag not found' });
+    if (!Object.values(environment).includes(envStr as any)) {
+      throw new ValidationError('Invalid environment');
     }
-  }
 
-  async deleteFlag(req: Request, res: Response): Promise<void> {
-    try {
-      const { key } = req.params as { key: string };
+    const result = await this.featureFlagService.getFlag(keyStr, envStr as typeof environment[keyof typeof environment]);
 
-      logger.info('Deleting feature flag', { key });
+    logger.info('Feature flag retrieved successfully', { key: keyStr, environment: envStr });
+    res.json(sendSuccessResponse('Feature flag retrieved successfully', 200, result));
+  });
 
-      if (!key) {
-        res.status(400).json({ error: 'Key is required' });
-        return;
-      }
+  updateFlag = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+    const { key } = req.params as { key: string }
+    const dto: UpdateFeatureFlagDTO = req.body;
 
-      await this.featureFlagService.deleteFlag(key);
-      logger.info('Feature flag deleted successfully', { key });
-      res.status(204).send();
-    } catch (error) {
-      logger.error('Error deleting feature flag', { error: error instanceof Error ? error.message : 'Flag not found', key: req.params.key });
-      res.status(404).json({ error: error instanceof Error ? error.message : 'Flag not found' });
+    logger.info('Updating feature flag', { key, updates: dto });
+
+    if (!key) {
+      throw new ValidationError('Key is required');
     }
-  }
 
-  async enableFlagForEnvironment(req: Request, res: Response) {
-    try {
-      const { key } = req.params;
-      const keyStr: string = Array.isArray(key) ? (key[0] as string) : (key as string);
+    const result = await this.featureFlagService.updateFlag(key, dto);
+    logger.info('Feature flag updated successfully', { key });
+    res.json(sendSuccessResponse('Feature flag updated successfully', 200, result));
+  });
 
-      const { environment: env } = req.query as { environment: string };
-      const envStr: string = Array.isArray(env) ? (env[0] as string) : (env as string) || environment.LOCAL;
+  deleteFlag = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+    const { key } = req.params as { key: string };
 
-      logger.info('Enabling feature flag for environment', { key: keyStr, environment: envStr });
+    logger.info('Deleting feature flag', { key });
 
-      if (!keyStr || !envStr) {
-        throw new Error("Key and Environment are required.")
-      }
-
-
-      const result = await this.featureFlagService.enableFlag(keyStr, envStr as typeof environment[keyof typeof environment]);
-      logger.info('Feature flag enabled successfully', { key: keyStr, environment: envStr });
-      res.json(result);
-    } catch (error) {
-      logger.error('Error enabling feature flag', { error: error instanceof Error ? error.message : 'Flag not found', key: req.params.key, environment: req.query.environment });
-      res.status(404).json({ error: error instanceof Error ? error.message : 'Flag not found' });
+    if (!key) {
+      throw new ValidationError('Key is required');
     }
-  }
 
-  async disableFlagForEnvironment(req: Request, res: Response) {
-    try {
-      const { key } = req.params;
-      const keyStr: string = Array.isArray(key) ? (key[0] as string) : (key as string);
+    await this.featureFlagService.deleteFlag(key);
+    logger.info('Feature flag deleted successfully', { key });
+    res.status(204).send();
+  });
 
-      const { environment: env } = req.query as { environment: string };
-      const envStr: string = Array.isArray(env) ? (env[0] as string) : (env as string) || environment.LOCAL;
+  enableFlagForEnvironment = asyncHandler(async (req: Request, res: Response) => {
+    const { key } = req.params;
+    const keyStr: string = Array.isArray(key) ? (key[0] as string) : (key as string);
 
-      logger.info('Disabling feature flag for environment', { key: keyStr, environment: envStr });
+    const { environment: env } = req.query as { environment: string };
+    const envStr: string = Array.isArray(env) ? (env[0] as string) : (env as string) || environment.LOCAL;
 
+    logger.info('Enabling feature flag for environment', { key: keyStr, environment: envStr });
 
-      if (!keyStr  || !envStr) {
-        throw new Error("Key and Environment are required.")
-      }
-
-      const result = await this.featureFlagService.disableFlag(keyStr, envStr as typeof environment[keyof typeof environment]);
-      logger.info('Feature flag disabled successfully', { key: keyStr, environment: envStr });
-
-      res.json(result);
-    } catch (error) {
-      logger.error('Error disabling feature flag', { error: error instanceof Error ? error.message : 'Flag not found', key: req.params.key, environment: req.query.environment });
-      res.status(404).json({ error: error instanceof Error ? error.message : 'Flag not found' });
+    if (!keyStr || !envStr) {
+      throw new ValidationError('Key and Environment are required');
     }
-  }
+
+    const result = await this.featureFlagService.enableFlag(keyStr, envStr as typeof environment[keyof typeof environment]);
+
+    logger.info('Feature flag enabled successfully', { key: keyStr, environment: envStr });
+    res.json(sendSuccessResponse('Feature flag enabled successfully', 200, result));
+  });
+
+  disableFlagForEnvironment = asyncHandler(async (req: Request, res: Response) => {
+    const { key } = req.params;
+    const keyStr: string = Array.isArray(key) ? (key[0] as string) : (key as string);
+
+    const { environment: env } = req.query as { environment: string };
+    const envStr: string = Array.isArray(env) ? (env[0] as string) : (env as string) || environment.LOCAL;
+
+    logger.info('Disabling feature flag for environment', { key: keyStr, environment: envStr });
+
+    if (!keyStr || !envStr) {
+      throw new ValidationError('Key and Environment are required');
+    }
+
+    const result = await this.featureFlagService.disableFlag(keyStr, envStr as typeof environment[keyof typeof environment]);
+
+    logger.info('Feature flag disabled successfully', { key: keyStr, environment: envStr });
+    res.json(sendSuccessResponse('Feature flag disabled successfully', 200, result));
+  });
 }

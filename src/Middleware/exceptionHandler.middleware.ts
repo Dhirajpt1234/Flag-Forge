@@ -1,4 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
+import { sendErrorResponse } from '../Utils/ApiResponse.util.js';
+import logger from '../Utils/logger.util.js';
 
 export interface ApiError extends Error {
   statusCode?: number;
@@ -56,7 +58,7 @@ export const exceptionHandler = (
   const message = error.message || 'An unexpected error occurred';
 
   // Log the error for debugging
-  console.error(`[${new Date().toISOString()}] ${req.method} ${req.path}:`, {
+  logger.error(`[${new Date().toISOString()}] ${req.method} ${req.path}:`, {
     error: error.message,
     stack: error.stack,
     statusCode,
@@ -67,16 +69,7 @@ export const exceptionHandler = (
   });
 
   // Send standardized error response
-  res.status(statusCode).json({
-    success: false,
-    error: {
-      code,
-      message,
-      ...(process.env.NODE_ENV === 'development' && { stack: error.stack })
-    },
-    timestamp: new Date().toISOString(),
-    path: req.path
-  });
+  res.status(statusCode).json(sendErrorResponse(message, statusCode));
 };
 
 export const asyncHandler = (fn: (req: Request, res: Response, next: NextFunction) => Promise<void>) => {

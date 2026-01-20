@@ -7,6 +7,7 @@ import FeatureFlagService from './Service/concrete/FeatureFlag.service.js';
 import FeatureFlagController from './Controller/FeatureFlag.controller.js';
 import FeatureFlagRepository from './Repository/concrete/FeatureFlag.repository.js';
 import AuditService from './Service/concrete/Audit.service.js';
+import { exceptionHandler } from './Middleware/exceptionHandler.middleware.js';
 import logger from './Utils/logger.util.js'
 
 // Load environment variables
@@ -25,6 +26,9 @@ const featureFlagService = new FeatureFlagService(featureFlagRepository);
 const featureFlagController = new FeatureFlagController(featureFlagService);
 const featureFlagRoutes = createFeatureFlagRoutes(featureFlagService, featureFlagController);
 app.use('/api/feature-flags', featureFlagRoutes);
+
+// Global error handler (must be after all routes)
+app.use(exceptionHandler);
 
 // Start server
 app.listen(PORT, async () => {

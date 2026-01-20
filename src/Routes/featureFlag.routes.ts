@@ -1,7 +1,6 @@
 import { Router } from 'express';
 import type { default as IFeatureFlagService } from '../Service/IFeatureFlag.service.js';
 import type { default as FeatureFlagController } from '../Controller/FeatureFlag.controller.js';
-import { exceptionHandler } from '../Middleware/exceptionHandler.middleware.js';
 
 export const createFeatureFlagRoutes = (
   service: IFeatureFlagService,
@@ -31,9 +30,6 @@ export const createFeatureFlagRoutes = (
 
   // PUT /flags/:key/disable - Disable a feature flag for an environment
   router.put('/flags/:key/disable', controller.disableFlagForEnvironment?.bind(controller));
-
-  // Apply exception handler to all routes
-  router.use(exceptionHandler);
 
   return router;
 };
