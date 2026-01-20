@@ -62,43 +62,77 @@ export default class FeatureFlagController {
     }
   }
 
-  //   async updateFlag(req: Request, res: Response): Promise<void> {
-  //     try {
-  //       const { key } = req.params;
-  //       const { environment: env } = req.query;
-  //       const dto: UpdateFeatureFlagDTO = req.body;
+  async updateFlag(req: Request, res: Response): Promise<void> {
+    try {
+      const { key } = req.params as { key: string }
+      const dto: UpdateFeatureFlagDTO = req.body;
 
-  //       if (!key || !env) {
-  //         res.status(400).json({ error: 'Key and environment are required' });
-  //         return;
-  //       }
-
-  //       const envStr = Array.isArray(env) ? env[0] : env;
-  //       if (!Object.values(environment).includes(envStr as any)) {
-  //         res.status(400).json({ error: 'Invalid environment' });
-  //         return;
-  //       }
-
-  //       const result = await this.service.updateFlag(key, envStr as typeof environment[keyof typeof environment], dto);
-  //       res.json(result);
-  //     } catch (error) {
-  //       res.status(404).json({ error: error instanceof Error ? error.message : 'Flag not found' });
-  //     }
-  //   }
-
-    async deleteFlag(req: Request, res: Response): Promise<void> {
-      try {
-        const { key } = req.params as { key: string };
-
-        if (!key) {
-          res.status(400).json({ error: 'Key is required' });
-          return;
-        }
-
-        await this.featureFlagService.deleteFlag(key);
-        res.status(204).send();
-      } catch (error) {
-        res.status(404).json({ error: error instanceof Error ? error.message : 'Flag not found' });
+      if (!key) {
+        res.status(400).json({ error: 'Key is required' });
+        return;
       }
+
+      const result = await this.featureFlagService.updateFlag(key, dto);
+      res.json(result);
+    } catch (error) {
+      res.status(404).json({ error: error instanceof Error ? error.message : 'Flag not found' });
     }
+  }
+
+  async deleteFlag(req: Request, res: Response): Promise<void> {
+    try {
+      const { key } = req.params as { key: string };
+
+      if (!key) {
+        res.status(400).json({ error: 'Key is required' });
+        return;
+      }
+
+      await this.featureFlagService.deleteFlag(key);
+      res.status(204).send();
+    } catch (error) {
+      res.status(404).json({ error: error instanceof Error ? error.message : 'Flag not found' });
+    }
+  }
+
+  async enableFlagForEnvironment(req: Request, res: Response) {
+    try {
+      const { key } = req.params;
+      const keyStr: string = Array.isArray(key) ? (key[0] as string) : (key as string);
+
+      const { environment: env } = req.query as { environment: string };
+      const envStr: string = Array.isArray(env) ? (env[0] as string) : (env as string) || environment.LOCAL;
+
+      if (!keyStr || !envStr) {
+        throw new Error("Key and Environment are required.")
+      }
+
+
+      const result = await this.featureFlagService.enableFlag(keyStr, envStr as typeof environment[keyof typeof environment]);
+      res.json(result);
+    } catch (error) {
+      res.status(404).json({ error: error instanceof Error ? error.message : 'Flag not found' });
+    }
+  }
+
+  async disableFlagForEnvironment(req: Request, res: Response) {
+    try {
+      const { key } = req.params;
+      const keyStr: string = Array.isArray(key) ? (key[0] as string) : (key as string);
+
+      const { environment: env } = req.query as { environment: string };
+      const envStr: string = Array.isArray(env) ? (env[0] as string) : (env as string) || environment.LOCAL;
+
+
+      if (!keyStr  || !envStr) {
+        throw new Error("Key and Environment are required.")
+      }
+
+      const result = await this.featureFlagService.disableFlag(keyStr, envStr as typeof environment[keyof typeof environment]);
+
+      res.json(result);
+    } catch (error) {
+      res.status(404).json({ error: error instanceof Error ? error.message : 'Flag not found' });
+    }
+  }
 }

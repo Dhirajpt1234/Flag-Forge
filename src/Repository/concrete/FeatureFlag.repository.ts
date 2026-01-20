@@ -58,8 +58,6 @@ export default class FeatureFlagRepository implements IFeatureFlagRepository {
     return result && !result.deleted ? this.mapPrismaToFeatureFlag(result) : null;
   }
 
-
-
   async findByKey(key: string): Promise<FeatureFlag | null> {
     const db = DatabaseClient.getPrismaInstance();
     const prisma = db.getPrismaClient();
@@ -82,17 +80,47 @@ export default class FeatureFlagRepository implements IFeatureFlagRepository {
     });
   }
 
-
   async update(flag: FeatureFlag): Promise<FeatureFlag> {
     const db = DatabaseClient.getPrismaInstance();
-    const prisma = db.getPrismaClient();
-    const result = await prisma.featureFlag.update({
-      where: { key_environment: { key: flag.key, environment: (flag.environment || environment.LOCAL) as string } },
+    const dbClient = db.getPrismaClient();
+
+    const result = await dbClient.featureFlag.updateMany({
+      where: { key: flag.key },
       data: {
         description: flag.description,
-        enabled: flag.enabled,
+        name: flag.name,
         updatedAt: new Date()
       }
+    });
+
+    return this.mapPrismaToFeatureFlag(result);
+  }
+
+  async enableFlagForEnvironment(key: string, env: typeof environment[keyof typeof environment]) : Promise<FeatureFlag> {
+    const db = DatabaseClient.getPrismaInstance();
+    const dbClient = db.getPrismaClient();
+
+    console.log('key', key);
+    console.log('env', env);
+
+    const result = await dbClient.featureFlag.update({
+      where: { key_environment: { key: key, environment: env } },
+      data: { enabled: true }
+    });
+
+    return this.mapPrismaToFeatureFlag(result);
+  }
+
+  async disableFlagForEnvironment(key: string, env: typeof environment[keyof typeof environment]) : Promise<FeatureFlag> {
+    const db = DatabaseClient.getPrismaInstance();
+    const dbClient = db.getPrismaClient();
+
+    console.log('key', key);
+    console.log('env', env);
+
+    const result = await dbClient.featureFlag.update({
+      where: { key_environment: { key: key, environment: env } },
+      data: { enabled: false }
     });
 
     return this.mapPrismaToFeatureFlag(result);

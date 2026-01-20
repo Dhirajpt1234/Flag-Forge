@@ -6,13 +6,13 @@ import type { default as IAuditService } from '../IAudit.service.js';
 import type { default as IFeatureFlagRepository } from '../../Repository/IFeatureFlag.repository.js';
 import environment from '../../Enums/environment.js';
 import type FeatureFlag from '../../DTO/FeatureFlag.dto.js';
+import { NotFoundError } from '../../Middleware/exceptionHandler.middleware.js';
 
 export default class FeatureFlagService implements IFeatureFlagService {
   constructor(
     private repository: IFeatureFlagRepository,
     // private auditService: IAuditService
   ) { }
-
   // This method will create flag for all the environments user have. 
   // Initially flags will be disabled for each environment.
   // currently we support 3 environments: development, staging, production : TODO later take envs from user. 
@@ -70,16 +70,16 @@ export default class FeatureFlagService implements IFeatureFlagService {
 
 
 
-  async updateFlag(key: string, env: typeof environment[keyof typeof environment], dto: UpdateFeatureFlagDTO): Promise<FeatureFlagResponseDTO> {
+  async updateFlag(key: string, dto: UpdateFeatureFlagDTO): Promise<FeatureFlagResponseDTO> {
     const existingFlag = await this.repository.findByKey(key);
     if (!existingFlag) {
-      throw new Error(`Feature flag with key '${key}' not found in ${env} environment`);
+      throw new NotFoundError(`Feature flag with key '${key}' not found`);
     }
 
     const updatedFlag: FeatureFlag = {
       ...existingFlag,
       description: dto.description ?? existingFlag.description,
-      enabled: dto.enabled ?? existingFlag.enabled
+      name: dto.name ?? existingFlag.name,
     };
 
     const savedFlag = await this.repository.update(updatedFlag);
@@ -96,9 +96,25 @@ export default class FeatureFlagService implements IFeatureFlagService {
     }
 
     // soft delete for the all the user specific environments
-
     await this.repository.delete(key);
   }
+
+  async enableFlag(key: string, env: (typeof environment)[keyof typeof environment]): Promise<FeatureFlag> {
+    const existingFlag = await this.repository.findByKeyAndEnvironment(key, env);
+    if (!existingFlag) {
+      throw new Error(`Feature flag with key '${key}' not found in ${env} environment`);
+    }
+    return this.repository.enableFlagForEnvironment(key, env);
+  }
+
+  async disableFlag(key: string, env: (typeof environment)[keyof typeof environment]): Promise<FeatureFlag> {
+    const existingFlag = await this.repository.findByKeyAndEnvironment(key, env);
+    if (!existingFlag) {
+      throw new Error(`Feature flag with key '${key}' not found in ${env} environment`);
+    }
+    return this.repository.disableFlagForEnvironment(key, env);
+  }
+
 
   private mapToResponseDTO(flag: FeatureFlag): FeatureFlagResponseDTO {
     return {

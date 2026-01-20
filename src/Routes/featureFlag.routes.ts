@@ -20,16 +20,17 @@ export const createFeatureFlagRoutes = (
   // Requires query param: environment
   router.get('/flags/:key', controller.getFlagByEnvironment.bind(controller));
 
-
-
-
-  // PUT /flags/:key - Update a feature flag
-  // Requires query param: environment
-  // router.put('/flags/:key', controller.updateFlag?.bind(controller));
-
   // DELETE /flags/:key - Delete a feature flag
-  // Requires query param: environment
   router.delete('/flags/:key', controller.deleteFlag?.bind(controller));
+
+  // PUT /flags/:key - Update a feature flag name and desc.
+  router.put('/flags/:key', controller.updateFlag?.bind(controller));
+
+  // PUT /flags/:key/enable - Enable a feature flag for an environment
+  router.put('/flags/:key/enable', controller.enableFlagForEnvironment?.bind(controller));
+
+  // PUT /flags/:key/disable - Disable a feature flag for an environment
+  router.put('/flags/:key/disable', controller.disableFlagForEnvironment?.bind(controller));
 
   // Apply exception handler to all routes
   router.use(exceptionHandler);

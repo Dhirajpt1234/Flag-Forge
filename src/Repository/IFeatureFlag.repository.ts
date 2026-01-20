@@ -7,10 +7,15 @@ export default interface IFeatureFlagRepository {
 
   findAll(env: typeof environment[keyof typeof environment]): Promise<FeatureFlag[]>;
 
+  findByKey(key: string): Promise<FeatureFlag | null>;
+
   findByKeyAndEnvironment(key: string, env: typeof environment[keyof typeof environment]): Promise<FeatureFlag | null>;
 
   delete(key: string): Promise<void>;
 
-  findByKey(key: string): Promise<FeatureFlag | null>;
   update(flag: FeatureFlag): Promise<FeatureFlag>;
+
+  enableFlagForEnvironment(key : string , env : typeof environment[keyof typeof environment]) : Promise<FeatureFlag>;
+
+  disableFlagForEnvironment(key : string , env : typeof environment[keyof typeof environment]) : Promise<FeatureFlag>;
 }
