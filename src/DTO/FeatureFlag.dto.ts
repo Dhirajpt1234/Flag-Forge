@@ -1,6 +1,7 @@
 import type environment from "../Enums/environment.js";
 
 export default interface FeatureFlag {
+  id: string;
   key: string;
   name: string;
   description: string;
