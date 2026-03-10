@@ -128,6 +128,7 @@ export default class FeatureFlagRepository implements IFeatureFlagRepository {
 
   private mapPrismaToFeatureFlag(prismaFlag: any): FeatureFlag {
     return {
+      id: prismaFlag.id,
       key: prismaFlag.key,
       name: prismaFlag.name,
       description: prismaFlag.description,

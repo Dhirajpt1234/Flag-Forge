@@ -1,0 +1,167 @@
+@startuml Rule Engine Class Diagram
+
+' Styling
+skinparam classAttributeIconSize 0
+skinparam class {
+    BackgroundColor LightYellow
+    BorderColor DarkBlue
+}
+skinparam interface {
+    BackgroundColor LightGreen
+    BorderColor DarkGreen
+}
+skinparam abstract {
+    BackgroundColor LightBlue
+    BorderColor DarkBlue
+}
+
+' ===== INTERFACES =====
+interface Rule {
+    +evaluate(context: EvaluationContext): RuleResult
+    +setNext(rule: Rule): void
+}
+
+interface RuleFactory {
+    +createRule(ruleType: string, config: any): Rule
+}
+
+' ===== ABSTRACT CLASS =====
+abstract class AbstractRule {
+    #nextRule: Rule | null
+    +setNext(rule: Rule): void
+    +evaluate(context: EvaluationContext): RuleResult
+    #{abstract} check(context: EvaluationContext): RuleResult
+    #{abstract} getRuleType(): RuleType
+}
+
+' ===== CONCRETE RULES =====
+class UserAllowListRule {
+    -config: UserAllowListConfig
+    +constructor(config: UserAllowListConfig)
+    #check(context: EvaluationContext): RuleResult
+    #getRuleType(): RuleType
+}
+
+class AttributeMatchRule {
+    -config: AttributeMatchConfig
+    +constructor(config: AttributeMatchConfig)
+    #check(context: EvaluationContext): RuleResult
+    #getRuleType(): RuleType
+}
+
+class PercentageRolloutRule {
+    -config: PercentageRolloutConfig
+    +constructor(config: PercentageRolloutConfig)
+    #check(context: EvaluationContext): RuleResult
+    #getRuleType(): RuleType
+}
+
+class DefaultRule {
+    -config: DefaultRuleConfig
+    -nextRule: Rule | null
+    +constructor(config: DefaultRuleConfig)
+    +setNext(rule: Rule): void
+    +evaluate(context: EvaluationContext): RuleResult
+}
+
+' ===== FACTORY =====
+class RuleFactoryImpl {
+    +createRule(ruleType: string, config: any): Rule
+}
+
+' ===== CORE ENGINE =====
+class RuleEngine {
+    -firstRule: Rule | null
+    -ruleFactory: RuleFactoryImpl
+    +constructor()
+    +buildRuleChain(ruleDefinitions: RuleDefinition[]): void
+    +evaluate(context: EvaluationContext): boolean
+    +evaluateWithDetails(context: EvaluationContext): RuleResult
+    +reset(): void
+}
+
+' ===== TYPES =====
+class EvaluationContext <<type>> {
+    +flagKey: string
+    +userId: string
+    +environment: Environment
+    +attributes: Map<string, string>
+}
+
+class RuleResult <<type>> {
+    +matched: boolean
+    +enabled: boolean
+    +ruleType: RuleType
+    +reason: string
+}
+
+enum RuleType {
+    USER_ALLOW_LIST
+    ATTRIBUTE_MATCH
+    PERCENTAGE_ROLLOUT
+    DEFAULT
+}
+
+' ===== RELATIONSHIPS =====
+
+' Interface implementations
+Rule <|.. AbstractRule : implements
+Rule <|.. DefaultRule : implements
+RuleFactory <|.. RuleFactoryImpl : implements
+
+' Inheritance
+AbstractRule <|-- UserAllowListRule : extends
+AbstractRule <|-- AttributeMatchRule : extends
+AbstractRule <|-- PercentageRolloutRule : extends
+
+' Composition & Dependencies
+RuleEngine *-- RuleFactoryImpl : contains
+RuleEngine o-- Rule : manages
+AbstractRule o-- Rule : nextRule
+
+' Factory creates rules
+RuleFactoryImpl ..> UserAllowListRule : creates
+RuleFactoryImpl ..> AttributeMatchRule : creates
+RuleFactoryImpl ..> PercentageRolloutRule : creates
+RuleFactoryImpl ..> DefaultRule : creates
+
+' Rules use types
+Rule ..> EvaluationContext : uses
+Rule ..> RuleResult : returns
+RuleEngine ..> EvaluationContext : uses
+RuleEngine ..> RuleResult : returns
+
+' ===== NOTES =====
+note right of RuleEngine
+  **Chain of Responsibility**
+  
+  Priority Order:
+  1. UserAllowListRule
+  2. AttributeMatchRule
+  3. PercentageRolloutRule
+  4. DefaultRule
+  
+  Each rule either:
+  - Matches & returns result
+  - Passes to next rule
+end note
+
+note bottom of RuleFactoryImpl
+  **Factory Pattern**
+  
+  Dynamically creates rule
+  instances based on:
+  - ruleType (enum)
+  - config (JSON)
+end note
+
+note top of AbstractRule
+  **Template Method**
+  
+  evaluate() orchestrates:
+  1. Call check()
+  2. If matched, return
+  3. Else delegate to next
+end note
+
+@enduml

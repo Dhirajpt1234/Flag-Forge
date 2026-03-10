@@ -24,5 +24,25 @@ model FeatureFlag {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  // Relations
+  ruleDefinitions RuleDefinition[]
+
   @@unique([key, environment])
+}
+
+model RuleDefinition {
+  id          String   @id @default(cuid())
+  flagId      String
+  environment String
+  ruleType    String
+  priority    Int
+  config      Json     // Store rule configuration as JSON
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  featureFlag FeatureFlag @relation(fields: [flagId], references: [id], onDelete: Cascade)
+
+  @@index([flagId, environment])
+  @@index([flagId, environment, priority])
 }
