@@ -12,6 +12,7 @@ export interface RuleDefinitionData {
 }
 
 export interface IRuleDefinitionRepository {
+  findById(id: string): Promise<RuleDefinitionData | null>;
   findByFlagIdAndEnvironment(flagId: string, environment: string): Promise<RuleDefinitionData[]>;
   findByFlagId(flagId: string): Promise<RuleDefinitionData[]>;
   create(ruleDefinition: Omit<RuleDefinitionData, 'id' | 'createdAt' | 'updatedAt'>): Promise<RuleDefinitionData>;
