@@ -33,11 +33,21 @@ export default class RuleService implements IRuleService {
     RuleValidator.validateRuleConfig(ruleData.ruleType, ruleData.config);
 
     // 4. Determine priority (auto-assign if not provided)
-    const priority = ruleData.priority ?? await this.getNextAvailablePriority(flagId, environment);
+    const nextAvailablePriority = await this.getNextAvailablePriority(flagId, environment);
+    let priority = ruleData.priority ?? nextAvailablePriority;
+    
+    // Normalize priority if it's too high (prevents large gaps)
+    if (ruleData.priority && ruleData.priority > nextAvailablePriority) {
+      priority = nextAvailablePriority;
+      logger.info('Priority normalized to prevent gaps', { 
+        requestedPriority: ruleData.priority, 
+        normalizedPriority: priority 
+      });
+    }
 
-    // 5. If priority is specified, shift existing rules to make space
-    if (ruleData.priority) {
-      await this.shiftRulesToMakeSpace(flagId, environment, ruleData.priority);
+    // 5. If priority is specified (and not normalized), shift existing rules to make space
+    if (ruleData.priority && ruleData.priority <= nextAvailablePriority) {
+      await this.shiftRulesToMakeSpace(flagId, environment, priority);
     }
 
     // 6. Validate priority
@@ -51,6 +61,8 @@ export default class RuleService implements IRuleService {
       priority,
       config: ruleData.config
     });
+
+    // TODO : add caching for quick retrieval of rules
 
     logger.info('Rule created successfully', { 
       ruleId: ruleDefinition.id, 
@@ -77,33 +89,93 @@ export default class RuleService implements IRuleService {
   async getRule(ruleId: string): Promise<RuleResponse> {
     logger.info('Fetching rule by ID', { ruleId });
 
-    // For now, we'll need to find by ID across all flags
-    // In a more optimized version, we might add a findById method to the repository
-    const rules = await this.ruleDefinitionRepository.findByFlagId('dummy'); // This needs to be implemented properly
+    const rule = await this.ruleDefinitionRepository.findById(ruleId);
     
-    // For now, throw an error as we need to implement findById in repository
-    throw new Error('Method getRule needs repository implementation with findById');
-
-    // const rule = rules.find(r => r.id === ruleId);
-    // if (!rule) {
-    //   throw new NotFoundError(`Rule with ID ${ruleId} not found`);
-    // }
+    if (!rule) {
+      throw new NotFoundError(`Rule with ID ${ruleId} not found`);
+    }
     
-    // return this.mapToRuleResponse(rule);
+    return this.mapToRuleResponse(rule);
   }
 
   async updateRule(ruleId: string, updates: UpdateRuleRequest): Promise<RuleResponse> {
-    logger.info('Updating rule', { ruleId });
+    logger.info('Updating rule', { ruleId, updates });
 
-    // Implementation will be added in future phase
-    throw new Error('Method updateRule not implemented yet');
+    // 1. Check if rule exists
+    const existingRule = await this.ruleDefinitionRepository.findById(ruleId);
+    if (!existingRule) {
+      throw new NotFoundError(`Rule with ID ${ruleId} not found`);
+    }
+
+    // 2. Validate rule configuration if provided
+    if (updates.ruleType && updates.config) {
+      RuleValidator.validateRuleConfig(updates.ruleType, updates.config);
+    }
+
+    // 3. Validate priority if provided
+    if (updates.priority !== undefined) {
+      RuleValidator.validatePriority(updates.priority);
+      
+      // If priority is changing, handle priority shifting
+      if (updates.priority !== existingRule.priority) {
+        await this.handlePriorityChange(existingRule, updates.priority);
+      }
+    }
+
+    // 4. Update the rule
+    const updateData: Partial<RuleDefinitionData> = {};
+    
+    if (updates.ruleType !== undefined) {
+      updateData.ruleType = updates.ruleType as string;
+    }
+    
+    if (updates.priority !== undefined) {
+      updateData.priority = updates.priority;
+    }
+    
+    if (updates.config !== undefined) {
+      updateData.config = updates.config;
+    }
+    
+    const updatedRule = await this.ruleDefinitionRepository.update(ruleId, updateData);
+
+    logger.info('Rule updated successfully', { 
+      ruleId, 
+      flagId: updatedRule.flagId,
+      environment: updatedRule.environment,
+      updates 
+    });
+
+    return this.mapToRuleResponse(updatedRule);
   }
 
+
+  // TODO : check for soft delete or archieve delete.
   async deleteRule(ruleId: string): Promise<void> {
     logger.info('Deleting rule', { ruleId });
 
-    // Implementation will be added in future phase
-    throw new Error('Method deleteRule not implemented yet');
+    // 1. Check if rule exists
+    const existingRule = await this.ruleDefinitionRepository.findById(ruleId);
+    if (!existingRule) {
+      throw new NotFoundError(`Rule with ID ${ruleId} not found`);
+    }
+
+    // 2. Delete the rule
+    await this.ruleDefinitionRepository.delete(ruleId);
+
+    // 3. Shift down rules that had higher priority
+    await this.shiftRulesDownAfterDeletion(
+      existingRule.flagId, 
+      existingRule.environment as Environment, 
+      existingRule.priority
+    );
+
+    logger.info('Rule deleted successfully', { 
+      ruleId, 
+      flagId: existingRule.flagId,
+      environment: existingRule.environment,
+      deletedPriority: existingRule.priority 
+    });
   }
 
   async deleteRulesByFlag(flagKey: string, environment: Environment): Promise<void> {
@@ -116,6 +188,101 @@ export default class RuleService implements IRuleService {
   }
 
   // Private helper methods
+
+  private async handlePriorityChange(existingRule: RuleDefinitionData, newPriority: number): Promise<void> {
+    logger.info('Handling priority change', { 
+      ruleId: existingRule.id, 
+      oldPriority: existingRule.priority, 
+      newPriority 
+    });
+
+    if (newPriority < existingRule.priority) {
+      // Moving rule to lower priority number - shift rules in between up
+      await this.shiftRulesUpForPriorityChange(
+        existingRule.flagId, 
+        existingRule.environment as Environment, 
+        newPriority, 
+        existingRule.priority
+      );
+    } else {
+      // Moving rule to higher priority number - shift rules in between down
+      await this.shiftRulesDownForPriorityChange(
+        existingRule.flagId, 
+        existingRule.environment as Environment, 
+        existingRule.priority, 
+        newPriority
+      );
+    }
+  }
+
+  private async shiftRulesUpForPriorityChange(
+    flagId: string, 
+    environment: Environment, 
+    startPriority: number, 
+    endPriority: number
+  ): Promise<void> {
+    const existingRules = await this.ruleDefinitionRepository.findByFlagIdAndEnvironment(flagId, environment);
+    
+    // Find rules that need to be shifted up (those between startPriority and endPriority-1)
+    const rulesToShift = existingRules.filter(rule => 
+      rule.priority >= startPriority && rule.priority < endPriority
+    );
+    
+    // Sort by priority descending to avoid conflicts
+    rulesToShift.sort((a, b) => b.priority - a.priority);
+
+    // Shift each rule by +1 priority
+    for (const rule of rulesToShift) {
+      await this.ruleDefinitionRepository.update(rule.id, {
+        priority: rule.priority + 1
+      });
+    }
+  }
+
+  private async shiftRulesDownForPriorityChange(
+    flagId: string, 
+    environment: Environment, 
+    startPriority: number, 
+    endPriority: number
+  ): Promise<void> {
+    const existingRules = await this.ruleDefinitionRepository.findByFlagIdAndEnvironment(flagId, environment);
+    
+    // Find rules that need to be shifted down (those between startPriority+1 and endPriority)
+    const rulesToShift = existingRules.filter(rule => 
+      rule.priority > startPriority && rule.priority <= endPriority
+    );
+    
+    // Sort by priority ascending to avoid conflicts
+    rulesToShift.sort((a, b) => a.priority - b.priority);
+
+    // Shift each rule by -1 priority
+    for (const rule of rulesToShift) {
+      await this.ruleDefinitionRepository.update(rule.id, {
+        priority: rule.priority - 1
+      });
+    }
+  }
+
+  private async shiftRulesDownAfterDeletion(
+    flagId: string, 
+    environment: Environment, 
+    deletedPriority: number
+  ): Promise<void> {
+    const existingRules = await this.ruleDefinitionRepository.findByFlagIdAndEnvironment(flagId, environment);
+    
+    // Find rules that have priority higher than the deleted rule
+    const rulesToShift = existingRules.filter(rule => rule.priority > deletedPriority);
+    
+    // Sort by priority ascending to avoid conflicts
+    rulesToShift.sort((a, b) => a.priority - b.priority);
+
+    // Shift each rule by -1 priority
+    for (const rule of rulesToShift) {
+      await this.ruleDefinitionRepository.update(rule.id, {
+        priority: rule.priority - 1
+      });
+    }
+  }
 
   private async validateFeatureFlagExists(flagKey: string, environment: Environment): Promise<void> {
     const featureFlag = await this.featureFlagRepository.findByKeyAndEnvironment(flagKey, environment as any);

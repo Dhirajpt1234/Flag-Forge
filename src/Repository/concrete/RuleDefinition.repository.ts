@@ -5,6 +5,15 @@ import { DatabaseClient } from '../../Database/db.client.js';
 export default class RuleDefinitionRepository implements IRuleDefinitionRepository {
   constructor() {} 
 
+  async findById(id: string): Promise<RuleDefinitionData | null> {
+    const prisma = DatabaseClient.getPrismaInstance().getPrismaClient();
+    const result = await prisma.ruleDefinition.findUnique({
+      where: { id }
+    });
+
+    return result ? this.mapToRuleDefinitionData(result) : null;
+  }
+
   async update(id: string, updates: Partial<RuleDefinitionData>): Promise<RuleDefinitionData> {
     const prisma = DatabaseClient.getPrismaInstance().getPrismaClient();
     
@@ -68,20 +77,6 @@ export default class RuleDefinitionRepository implements IRuleDefinitionReposito
 
     return this.mapToRuleDefinitionData(result);
   }
-
-  // async update(id: string, updates: Partial<RuleDefinitionData>): Promise<RuleDefinitionData> {
-  //   const prisma = DatabaseClient.getPrismaInstance().getPrismaClient();
-  //   const result = await prisma.ruleDefinition.update({
-  //     where: { id },
-  //     data: {
-  //       ruleType: updates.ruleType,
-  //       priority: updates.priority,
-  //       config: updates.config
-  //     }
-  //   });
-
-  //   return this.mapToRuleDefinitionData(result);
-  // }
 
   async delete(id: string): Promise<void> {
     const prisma = DatabaseClient.getPrismaInstance().getPrismaClient();
