@@ -4,29 +4,32 @@ import type { RuleResult } from '../../RuleEngine/Types/RuleResult.type.js';
 import { RuleType } from '../../RuleEngine/Types/RuleType.enum.js';
 import RuleDefinitionRepository from '../../Repository/concrete/RuleDefinition.repository.js';
 import type { RuleDefinitionData } from '../../Repository/IRuleDefinition.repository.js';
+import type { default as IFeatureFlagRepository } from '../../Repository/IFeatureFlag.repository.js';
 import logger from '../../Utils/logger.util.js';
 
 export class RuleEngineService {
   private ruleEngineCache = new Map<string, RuleEngine>();
   private ruleDefinitionRepository: RuleDefinitionRepository;
+  private featureFlagRepository: IFeatureFlagRepository;
 
-  constructor() {
+  constructor(featureFlagRepository?: IFeatureFlagRepository) {
     this.ruleDefinitionRepository = new RuleDefinitionRepository();
+    this.featureFlagRepository = featureFlagRepository!;
   }
 
   /**
    * Evaluate a feature flag for a given context
    */
   async evaluateFlag(flagKey: string, context: EvaluationContext): Promise<boolean> {
-    logger.info('Evaluating feature flag', { flagKey, userId: context.userId });
+    logger.info('Evaluating feature flag', { flagKey, environment: context.environment });
     
     try {
-      const ruleEngine = await this.getRuleEngine(flagKey);
+      const ruleEngine = await this.getRuleEngine(flagKey, context.environment);
       const result = ruleEngine.evaluate(context);
       
       logger.info('Feature flag evaluation completed', { 
         flagKey, 
-        userId: context.userId, 
+        environment: context.environment,
         result 
       });
       
@@ -34,7 +37,7 @@ export class RuleEngineService {
     } catch (error) {
       logger.error('Error evaluating feature flag', { 
         flagKey, 
-        userId: context.userId, 
+        environment: context.environment,
         error: error instanceof Error ? error.message : 'Unknown error'
       });
       
@@ -47,15 +50,15 @@ export class RuleEngineService {
    * Evaluate a feature flag and return detailed result
    */
   async evaluateFlagWithDetails(flagKey: string, context: EvaluationContext): Promise<RuleResult> {
-    logger.info('Evaluating feature flag with details', { flagKey, userId: context.userId });
+    logger.info('Evaluating feature flag with details', { flagKey, environment: context.environment });
     
     try {
-      const ruleEngine = await this.getRuleEngine(flagKey);
+      const ruleEngine = await this.getRuleEngine(flagKey, context.environment);
       const result = ruleEngine.evaluateWithDetails(context);
       
       logger.info('Feature flag evaluation completed', { 
         flagKey, 
-        userId: context.userId, 
+        environment: context.environment,
         result: result.enabled,
         ruleType: result.ruleType,
         reason: result.reason
@@ -65,7 +68,7 @@ export class RuleEngineService {
     } catch (error) {
       logger.error('Error evaluating feature flag', { 
         flagKey, 
-        userId: context.userId, 
+        environment: context.environment,
         error: error instanceof Error ? error.message : 'Unknown error'
       });
       
@@ -80,52 +83,51 @@ export class RuleEngineService {
   }
 
   /**
-   * Get or create a rule engine for a specific flag
+   * Get or create a rule engine for a specific flag and environment
    */
-  private async getRuleEngine(flagKey: string): Promise<RuleEngine> {
+  private async getRuleEngine(flagKey: string, environment: string): Promise<RuleEngine> {
+    // Create cache key that includes environment
+    const cacheKey = `${flagKey}:${environment}`;
+    
     // Check cache first
-    if (this.ruleEngineCache.has(flagKey)) {
-      return this.ruleEngineCache.get(flagKey)!;
+    if (this.ruleEngineCache.has(cacheKey)) {
+      return this.ruleEngineCache.get(cacheKey)!;
     }
 
     // Create new rule engine
     const ruleEngine = new RuleEngine();
     
-    // Load rule definitions from database
-    const ruleDefinitions = await this.loadRuleDefinitions(flagKey);
+    // Load rule definitions from database for specific environment
+    const ruleDefinitions = await this.loadRuleDefinitions(flagKey, environment);
     
     // Build rule chain
     ruleEngine.buildRuleChain(ruleDefinitions);
     
     // Cache the rule engine
-    this.ruleEngineCache.set(flagKey, ruleEngine);
+    this.ruleEngineCache.set(cacheKey, ruleEngine);
     
     return ruleEngine;
   }
 
   /**
-   * Load rule definitions for a flag from the database
+   * Load rule definitions for a flag and environment from the database
    */
-  private async loadRuleDefinitions(flagKey: string): Promise<any[]> {
-    // First, find the feature flag by key to get its ID
-    const prisma = require('@prisma/client').PrismaClient;
-    const prismaClient = new prisma();
-    
+  private async loadRuleDefinitions(flagKey: string, environment: string): Promise<any[]> {
     try {
-      const featureFlag = await prismaClient.featureFlag.findFirst({
-        where: { key: flagKey }
-      });
+      // Find the feature flag by key and environment to get its ID
+      const featureFlag = await this.featureFlagRepository.findByKeyAndEnvironment(flagKey, environment as any);
 
       if (!featureFlag) {
-        logger.warn('Feature flag not found', { flagKey });
+        logger.warn('Feature flag not found', { flagKey, environment });
         return [];
       }
 
-      // Load rule definitions
-      const ruleDefinitions = await this.ruleDefinitionRepository.findByFlagId(featureFlag.id);
+      // Load rule definitions for specific environment
+      const ruleDefinitions = await this.ruleDefinitionRepository.findByFlagIdAndEnvironment(featureFlag.id, environment);
       
       logger.info('Loaded rule definitions', { 
         flagKey, 
+        environment,
         count: ruleDefinitions.length 
       });
 
@@ -134,8 +136,14 @@ export class RuleEngineService {
         priority: def.priority,
         config: def.config
       }));
-    } finally {
-      await prismaClient.$disconnect();
+    } catch (error) {
+      logger.error('Error loading rule definitions', { 
+        flagKey, 
+        environment,
+        error: error instanceof Error ? error : 'Unknown error'
+      });
+      
+      return [];
     }
   }
 
@@ -144,8 +152,16 @@ export class RuleEngineService {
    */
   clearCache(flagKey?: string): void {
     if (flagKey) {
-      this.ruleEngineCache.delete(flagKey);
-      logger.info('Cleared rule engine cache', { flagKey });
+      // Clear all cache entries for this flag across all environments
+      const keysToDelete: string[] = [];
+      for (const key of this.ruleEngineCache.keys()) {
+        if (key.startsWith(`${flagKey}:`)) {
+          keysToDelete.push(key);
+        }
+      }
+      
+      keysToDelete.forEach(key => this.ruleEngineCache.delete(key));
+      logger.info('Cleared rule engine cache', { flagKey, clearedKeys: keysToDelete.length });
     } else {
       this.ruleEngineCache.clear();
       logger.info('Cleared all rule engine cache');

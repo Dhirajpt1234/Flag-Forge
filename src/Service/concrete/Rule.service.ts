@@ -10,14 +10,19 @@ import { RuleValidator } from '../../Utils/ruleValidation.util.js';
 import { NotFoundError, ValidationError } from '../../Middleware/exceptionHandler.middleware.js';
 import logger from '../../Utils/logger.util.js';
 import environment from '../../Enums/environment.js';
+import EvaluationService from './Evaluation.service.js';
 
 export default class RuleService implements IRuleService {
   private ruleDefinitionRepository: RuleDefinitionRepository;
   private featureFlagRepository: IFeatureFlagRepository;
+  private evaluationService?: EvaluationService;
 
-  constructor(featureFlagRepository?: IFeatureFlagRepository) {
+  constructor(featureFlagRepository?: IFeatureFlagRepository, evaluationService?: EvaluationService) {
     this.ruleDefinitionRepository = new RuleDefinitionRepository();
     this.featureFlagRepository = featureFlagRepository!;
+    if (evaluationService) {
+      this.evaluationService = evaluationService;
+    }
   }
 
   async createRule(flagKey: string, environment: Environment, ruleData: CreateRuleRequest): Promise<RuleResponse> {
@@ -71,6 +76,9 @@ export default class RuleService implements IRuleService {
       ruleType: ruleData.ruleType,
       priority 
     });
+
+    // Clear evaluation cache for this flag
+    this.clearEvaluationCache(flagKey);
 
     return this.mapToRuleResponse(ruleDefinition);
   }
@@ -146,6 +154,14 @@ export default class RuleService implements IRuleService {
       updates 
     });
 
+    // Clear evaluation cache for this flag
+    // Note: We need to get the flagKey, but we only have flagId here
+    // For now, we'll clear all cache since we can't easily map flagId back to flagKey
+    if (this.evaluationService) {
+      this.evaluationService.clearCache();
+      logger.info('Cleared all evaluation cache after rule update');
+    }
+
     return this.mapToRuleResponse(updatedRule);
   }
 
@@ -176,6 +192,14 @@ export default class RuleService implements IRuleService {
       environment: existingRule.environment,
       deletedPriority: existingRule.priority 
     });
+
+    // Clear evaluation cache for this flag
+    // Note: We need to get the flagKey, but we only have flagId here
+    // For now, we'll clear all cache since we can't easily map flagId back to flagKey
+    if (this.evaluationService) {
+      this.evaluationService.clearCache();
+      logger.info('Cleared all evaluation cache after rule deletion');
+    }
   }
 
   async deleteRulesByFlag(flagKey: string, environment: Environment): Promise<void> {
@@ -185,9 +209,19 @@ export default class RuleService implements IRuleService {
     await this.ruleDefinitionRepository.deleteByFlagIdAndEnvironment(flagId, environment);
 
     logger.info('Rules deleted successfully', { flagKey, environment });
+
+    // Clear evaluation cache for this flag
+    this.clearEvaluationCache(flagKey);
   }
 
   // Private helper methods
+
+  private clearEvaluationCache(flagKey: string): void {
+    if (this.evaluationService) {
+      this.evaluationService.clearCache(flagKey);
+      logger.info('Cleared evaluation cache for flag', { flagKey });
+    }
+  }
 
   private async handlePriorityChange(existingRule: RuleDefinitionData, newPriority: number): Promise<void> {
     logger.info('Handling priority change', { 
