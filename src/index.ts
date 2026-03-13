@@ -15,6 +15,7 @@ import EvaluationController from './Controller/Evaluation.controller';
 import AuditService from './Service/concrete/Audit.service';
 import { exceptionHandler } from './Middleware/exceptionHandler.middleware';
 import logger from './Utils/logger.util'
+import { mdcMiddleware } from './Middleware/mdc.middleware';
 
 // Load environment variables
 dotenv.config();
@@ -25,6 +26,7 @@ const PORT = process.env.PORT || 3000;
 // Middleware
 app.use(express.json());
 app.use(routerLogger);
+app.use(mdcMiddleware);
 
 //routes
 const featureFlagRepository = new FeatureFlagRepository(process.env.DATABASE_URL || '');
@@ -47,6 +49,7 @@ app.use('/api/feature-flags', evaluationRoutes);
 
 // Global error handler (must be after all routes)
 app.use(exceptionHandler);
+app.use(mdcMiddleware);
 
 // Start server
 app.listen(PORT, async () => {
