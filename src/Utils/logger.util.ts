@@ -1,17 +1,6 @@
-import { AsyncLocalStorage } from "async_hooks";
 import fs from "fs";
 import path from "path";
 import pino from "pino";
-
-type MDC = {
-  flagId?: string;
-  ruleId?: string;
-  flagKey?: string;
-  traceId?: string;
-  spanId?: string;
-};
-
-const asyncLocalStorage = new AsyncLocalStorage<MDC>();
 
 /*
 ---------------------------------------
@@ -48,23 +37,9 @@ const jsonLogger = pino(
 
 /*
 ---------------------------------------
-MDC
+JSON Logger (for machines)
 ---------------------------------------
 */
-
-export function runWithMDC(context: MDC, fn: () => void) {
-  asyncLocalStorage.run(context, fn);
-}
-
-export function setMDC(values: Partial<MDC>) {
-  const store = asyncLocalStorage.getStore();
-  if (!store) return;
-  Object.assign(store, values);
-}
-
-function getMDC(): MDC {
-  return asyncLocalStorage.getStore() || {};
-}
 
 /*
 ---------------------------------------
@@ -104,14 +79,10 @@ Formatting
 function formatLog(level: string, message: string, data?: any) {
   const time = new Date().toISOString();
   const caller = getCaller();
-  const mdc = getMDC();
-
-  const mdcStr = `[flagId=${mdc.flagId ?? ""} ruleId=${mdc.ruleId ?? ""} flagKey=${mdc.flagKey ?? ""}]`;
-  const traceStr = `[${mdc.traceId ?? ""} ${mdc.spanId ?? ""}]`;
 
   const dataStr = data ? JSON.stringify(data) : "";
 
-  return `[${time}] [${level.toUpperCase()}] [${caller}] ${mdcStr} ${message} ${dataStr} ${traceStr}`;
+  return `[${time}] [${level.toUpperCase()}] [${caller}] ${message} ${dataStr}`;
 }
 
 /*
@@ -142,7 +113,6 @@ function write(level: "info" | "debug" | "warn" | "error", message: string, data
   jsonLogger[level]({
     message,
     data,
-    mdc: getMDC(),
     caller: getCaller(),
     timestamp: new Date().toISOString()
   });
