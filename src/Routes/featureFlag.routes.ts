@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import type { default as IFeatureFlagService } from '../Service/IFeatureFlag.service.js';
-import type { default as FeatureFlagController } from '../Controller/FeatureFlag.controller.js';
+import type { default as IFeatureFlagService } from '../Service/IFeatureFlag.service';
+import type { default as FeatureFlagController } from '../Controller/FeatureFlag.controller';
 
 export const createFeatureFlagRoutes = (
   service: IFeatureFlagService,

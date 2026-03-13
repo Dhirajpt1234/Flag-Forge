@@ -1,4 +1,4 @@
-import type { default as IAuditService } from '../IAudit.service.js';
+import type { default as IAuditService } from '../IAudit.service';
 
 export default class AuditService implements IAuditService {
   async log(action: string, entity: string, oldValue: any, newValue: any): Promise<void> {

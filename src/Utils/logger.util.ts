@@ -1,6 +1,6 @@
 import winston from 'winston'
-import { getTraceMetadata } from './trace.util.js'
-import { LOG_LEVEL, APP_NAME  } from "../config/properties.js"
+import { getTraceMetadata } from './trace.util'
+import { LOG_LEVEL, APP_NAME  } from "../config/properties"
 
 // Get environment variables
 const IS_PRODUCTION = process.env.NODE_ENV === 'production'

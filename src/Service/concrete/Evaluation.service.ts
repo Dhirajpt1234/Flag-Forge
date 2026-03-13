@@ -1,11 +1,11 @@
-import type { default as IEvaluationService } from '../IEvaluationService.js';
-import type { EvaluationContext } from '../../RuleEngine/Types/EvaluationContext.type.js';
-import type { RuleResult } from '../../RuleEngine/Types/RuleResult.type.js';
-import type { Environment } from '../IRuleService.js';
-import { RuleEngineService } from './RuleEngine.service.js';
-import type { default as IFeatureFlagRepository } from '../../Repository/IFeatureFlag.repository.js';
-import logger from '../../Utils/logger.util.js';
-import environment from '../../Enums/environment.js';
+import type { default as IEvaluationService } from '../IEvaluationService';
+import type { EvaluationContext } from '../../RuleEngine/Types/EvaluationContext.type';
+import type { RuleResult } from '../../RuleEngine/Types/RuleResult.type';
+import type { Environment } from '../IRuleService';
+import { RuleEngineService } from './RuleEngine.service';
+import type { default as IFeatureFlagRepository } from '../../Repository/IFeatureFlag.repository';
+import logger from '../../Utils/logger.util';
+import environment from '../../Enums/environment';
 
 export default class EvaluationService implements IEvaluationService {
   private ruleEngineService: RuleEngineService;

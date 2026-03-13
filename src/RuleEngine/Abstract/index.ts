@@ -1,1 +1,1 @@
-export { AbstractRule } from './AbstractRule.js';
+export { AbstractRule } from './AbstractRule';

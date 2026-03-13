@@ -1,6 +1,6 @@
-import type { default as CreateRuleRequest } from '../DTO/CreateRuleRequest.dto.js';
-import type { default as UpdateRuleRequest } from '../DTO/UpdateRuleRequest.dto.js';
-import type { default as RuleResponse } from '../DTO/RuleResponse.dto.js';
+import type { default as CreateRuleRequest } from '../DTO/CreateRuleRequest.dto';
+import type { default as UpdateRuleRequest } from '../DTO/UpdateRuleRequest.dto';
+import type { default as RuleResponse } from '../DTO/RuleResponse.dto';
 
 export type Environment = 'local' | 'staging' | 'production';
 

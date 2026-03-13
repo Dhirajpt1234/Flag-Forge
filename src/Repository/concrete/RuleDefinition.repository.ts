@@ -1,6 +1,6 @@
-import type { IRuleDefinitionRepository } from '../IRuleDefinition.repository.js';
-import type { RuleDefinitionData } from '../IRuleDefinition.repository.js';
-import { DatabaseClient } from '../../Database/db.client.js';
+import type { IRuleDefinitionRepository } from '../IRuleDefinition.repository';
+import type { RuleDefinitionData } from '../IRuleDefinition.repository';
+import { DatabaseClient } from '../../Database/db.client';
 
 export default class RuleDefinitionRepository implements IRuleDefinitionRepository {
   constructor() {} 

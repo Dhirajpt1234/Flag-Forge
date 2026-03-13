@@ -1,10 +1,10 @@
-import type { RuleFactory } from '../Interfaces/RuleFactory.interface.js';
-import type { Rule } from '../Interfaces/Rule.interface.js';
-import { RuleType } from '../Types/RuleType.enum.js';
-import { UserAllowListRule } from '../Rules/UserAllowListRule.js';
-import { AttributeMatchRule } from '../Rules/AttributeMatchRule.js';
-import { PercentageRolloutRule } from '../Rules/PercentageRolloutRule.js';
-import { DefaultRule } from '../Rules/DefaultRule.js';
+import type { RuleFactory } from '../Interfaces/RuleFactory.interface';
+import type { Rule } from '../Interfaces/Rule.interface';
+import { RuleType } from '../Types/RuleType.enum';
+import { UserAllowListRule } from '../Rules/UserAllowListRule';
+import { AttributeMatchRule } from '../Rules/AttributeMatchRule';
+import { PercentageRolloutRule } from '../Rules/PercentageRolloutRule';
+import { DefaultRule } from '../Rules/DefaultRule';
 
 export class RuleFactoryImpl implements RuleFactory {
   createRule(ruleType: string, config: any): Rule {

@@ -1,7 +1,7 @@
-import type { Rule } from '../Interfaces/Rule.interface.js';
-import type { EvaluationContext } from '../Types/EvaluationContext.type.js';
-import type { RuleResult } from '../Types/RuleResult.type.js';
-import { RuleType } from '../Types/RuleType.enum.js';
+import type { Rule } from '../Interfaces/Rule.interface';
+import type { EvaluationContext } from '../Types/EvaluationContext.type';
+import type { RuleResult } from '../Types/RuleResult.type';
+import { RuleType } from '../Types/RuleType.enum';
 
 export abstract class AbstractRule implements Rule {
   protected nextRule: Rule | null = null;

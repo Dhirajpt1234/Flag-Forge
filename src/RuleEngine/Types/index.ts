@@ -1,3 +1,3 @@
-export { RuleType } from './RuleType.enum.js';
-export type { EvaluationContext } from './EvaluationContext.type.js';
-export type { RuleResult } from './RuleResult.type.js';
+export { RuleType } from './RuleType.enum';
+export type { EvaluationContext } from './EvaluationContext.type';
+export type { RuleResult } from './RuleResult.type';

@@ -1,8 +1,8 @@
-import type { default as CreateFeatureFlagDTO } from '../DTO/CreateFeatureFlagRequest.dto.js';
-import type { default as UpdateFeatureFlagDTO } from '../DTO/UpdateFeatureFlagRequest.dto.js';
-import type { default as FeatureFlagResponseDTO } from '../DTO/FeatureFlagResponse.dto.js';
-import environment from '../Enums/environment.js';
-import type FeatureFlag from '../DTO/FeatureFlag.dto.js';
+import type { default as CreateFeatureFlagDTO } from '../DTO/CreateFeatureFlagRequest.dto';
+import type { default as UpdateFeatureFlagDTO } from '../DTO/UpdateFeatureFlagRequest.dto';
+import type { default as FeatureFlagResponseDTO } from '../DTO/FeatureFlagResponse.dto';
+import environment from '../Enums/environment';
+import type FeatureFlag from '../DTO/FeatureFlag.dto';
 
 export default interface IFeatureFlagService {
   createFlag(dto: CreateFeatureFlagDTO): Promise<FeatureFlagResponseDTO>;

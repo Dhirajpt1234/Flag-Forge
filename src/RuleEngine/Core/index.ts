@@ -1,1 +1,1 @@
-export { RuleEngine } from './RuleEngine.js';
+export { RuleEngine } from './RuleEngine';

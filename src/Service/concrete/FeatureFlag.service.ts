@@ -1,13 +1,13 @@
-import type { default as IFeatureFlagService } from '../IFeatureFlag.service.js';
-import type { default as CreateFeatureFlagDTO } from '../../DTO/CreateFeatureFlagRequest.dto.js';
-import type { default as UpdateFeatureFlagDTO } from '../../DTO/UpdateFeatureFlagRequest.dto.js';
-import type { default as FeatureFlagResponseDTO } from '../../DTO/FeatureFlagResponse.dto.js';
-import type { default as IAuditService } from '../IAudit.service.js';
-import type { default as IFeatureFlagRepository } from '../../Repository/IFeatureFlag.repository.js';
-import environment from '../../Enums/environment.js';
-import type FeatureFlag from '../../DTO/FeatureFlag.dto.js';
-import { NotFoundError } from '../../Middleware/exceptionHandler.middleware.js';
-import logger from '../../Utils/logger.util.js';
+import type { default as IFeatureFlagService } from '../IFeatureFlag.service';
+import type { default as CreateFeatureFlagDTO } from '../../DTO/CreateFeatureFlagRequest.dto';
+import type { default as UpdateFeatureFlagDTO } from '../../DTO/UpdateFeatureFlagRequest.dto';
+import type { default as FeatureFlagResponseDTO } from '../../DTO/FeatureFlagResponse.dto';
+import type { default as IAuditService } from '../IAudit.service';
+import type { default as IFeatureFlagRepository } from '../../Repository/IFeatureFlag.repository';
+import environment from '../../Enums/environment';
+import type FeatureFlag from '../../DTO/FeatureFlag.dto';
+import { NotFoundError } from '../../Middleware/exceptionHandler.middleware';
+import logger from '../../Utils/logger.util';
 
 export default class FeatureFlagService implements IFeatureFlagService {
   constructor(

@@ -1,11 +1,11 @@
-import { RuleEngine } from '../../RuleEngine/Core/RuleEngine.js';
-import type { EvaluationContext } from '../../RuleEngine/Types/EvaluationContext.type.js';
-import type { RuleResult } from '../../RuleEngine/Types/RuleResult.type.js';
-import { RuleType } from '../../RuleEngine/Types/RuleType.enum.js';
-import RuleDefinitionRepository from '../../Repository/concrete/RuleDefinition.repository.js';
-import type { RuleDefinitionData } from '../../Repository/IRuleDefinition.repository.js';
-import type { default as IFeatureFlagRepository } from '../../Repository/IFeatureFlag.repository.js';
-import logger from '../../Utils/logger.util.js';
+import { RuleEngine } from '../../RuleEngine/Core/RuleEngine';
+import type { EvaluationContext } from '../../RuleEngine/Types/EvaluationContext.type';
+import type { RuleResult } from '../../RuleEngine/Types/RuleResult.type';
+import { RuleType } from '../../RuleEngine/Types/RuleType.enum';
+import RuleDefinitionRepository from '../../Repository/concrete/RuleDefinition.repository';
+import type { RuleDefinitionData } from '../../Repository/IRuleDefinition.repository';
+import type { default as IFeatureFlagRepository } from '../../Repository/IFeatureFlag.repository';
+import logger from '../../Utils/logger.util';
 
 export class RuleEngineService {
   private ruleEngineCache = new Map<string, RuleEngine>();

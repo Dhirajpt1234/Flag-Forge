@@ -1,5 +1,5 @@
-import type FeatureFlag from '../DTO/FeatureFlag.dto.js';
-import environment from '../Enums/environment.js';
+import type FeatureFlag from '../DTO/FeatureFlag.dto';
+import environment from '../Enums/environment';
 
 
 export default interface IFeatureFlagRepository {

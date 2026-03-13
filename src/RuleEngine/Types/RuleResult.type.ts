@@ -1,4 +1,4 @@
-import { RuleType } from './RuleType.enum.js';
+import { RuleType } from './RuleType.enum';
 
 export interface RuleResult {
   matched: boolean;

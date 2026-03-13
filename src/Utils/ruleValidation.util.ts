@@ -1,6 +1,6 @@
-import { RuleType } from '../RuleEngine/Types/RuleType.enum.js';
-import type { RuleConfig } from '../DTO/CreateRuleRequest.dto.js';
-import { ValidationError } from '../Middleware/exceptionHandler.middleware.js';
+import { RuleType } from '../RuleEngine/Types/RuleType.enum';
+import type { RuleConfig } from '../DTO/CreateRuleRequest.dto';
+import { ValidationError } from '../Middleware/exceptionHandler.middleware';
 
 export class RuleValidator {
   static validateRuleConfig(ruleType: RuleType, config: RuleConfig): void {

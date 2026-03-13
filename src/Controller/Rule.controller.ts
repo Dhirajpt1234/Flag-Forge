@@ -1,11 +1,11 @@
 import type { Request, Response } from 'express';
-import type { default as IRuleService } from '../Service/IRuleService.js';
-import type { default as CreateRuleRequest } from '../DTO/CreateRuleRequest.dto.js';
-import type { default as UpdateRuleRequest } from '../DTO/UpdateRuleRequest.dto.js';
-import type { Environment } from '../Service/IRuleService.js';
-import { ValidationError, asyncHandler } from '../Middleware/exceptionHandler.middleware.js';
-import logger from '../Utils/logger.util.js';
-import { sendSuccessResponse, sendErrorResponse } from '../Utils/ApiResponse.util.js';
+import type { default as IRuleService } from '../Service/IRuleService';
+import type { default as CreateRuleRequest } from '../DTO/CreateRuleRequest.dto';
+import type { default as UpdateRuleRequest } from '../DTO/UpdateRuleRequest.dto';
+import type { Environment } from '../Service/IRuleService';
+import { ValidationError, asyncHandler } from '../Middleware/exceptionHandler.middleware';
+import logger from '../Utils/logger.util';
+import { sendSuccessResponse, sendErrorResponse } from '../Utils/ApiResponse.util';
 
 export default class RuleController {
   constructor(private ruleService: IRuleService) { }

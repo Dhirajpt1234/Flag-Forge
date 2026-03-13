@@ -1,1 +1,1 @@
-export { RuleFactoryImpl } from './RuleFactoryImpl.js';
+export { RuleFactoryImpl } from './RuleFactoryImpl';

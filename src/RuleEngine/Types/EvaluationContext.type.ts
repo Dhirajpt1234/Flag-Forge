@@ -1,4 +1,4 @@
-import environment from '../../Enums/environment.js';
+import environment from '../../Enums/environment';
 
 export interface EvaluationContext {
   flagKey: string;
