@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import pino from "pino";
+import { APP_NAME, LOG_LEVEL } from "../config/properties";
 
 /*
 ---------------------------------------
@@ -15,7 +16,7 @@ if (!fs.existsSync(logDir)) {
 }
 
 const readableStream = fs.createWriteStream(
-  path.join(logDir, "app.log"),
+  path.join(logDir, `${APP_NAME}.log`),
   { flags: "a" }
 );
 
@@ -27,19 +28,13 @@ JSON Logger (for machines)
 
 const jsonLogger = pino(
   {
-    level: process.env.LOG_LEVEL || "info",
+    level: LOG_LEVEL,
   },
   pino.destination({
-    dest: path.join(logDir, "app.json.log"),
+    dest: path.join(logDir, `${APP_NAME}.json.log`),
     sync: false
   })
 );
-
-/*
----------------------------------------
-JSON Logger (for machines)
----------------------------------------
-*/
 
 /*
 ---------------------------------------
@@ -54,9 +49,15 @@ function getCaller(): string {
     if (
       line.includes(".ts") &&
       !line.includes("logger.util") &&
-      !line.includes("node_modules")
+      !line.includes("node_modules") &&
+      !line.includes("exceptionHandler.middleware") &&
+      !line.includes("/Middleware/")
     ) {
-      const match = line.match(/\((.*):(\d+):(\d+)\)/);
+      const normalized = line.trim();
+
+      const matchWithParens = normalized.match(/\((.*\.ts):(\d+):(\d+)\)/);
+      const matchWithoutParens = normalized.match(/at\s+(?:async\s+)?(.*\.ts):(\d+):(\d+)$/);
+      const match = matchWithParens || matchWithoutParens;
 
       if (!match) continue;
 
@@ -67,7 +68,7 @@ function getCaller(): string {
     }
   }
 
-  return "unknown";
+  return "unknownFileName";
 }
 
 /*
@@ -98,7 +99,9 @@ function write(level: "info" | "debug" | "warn" | "error", message: string, data
   console readable
   */
 
-  console.log(formatted);
+  if(LOG_LEVEL !== "PROD") {
+    console.log(formatted);
+  }
 
   /*
   readable log file
