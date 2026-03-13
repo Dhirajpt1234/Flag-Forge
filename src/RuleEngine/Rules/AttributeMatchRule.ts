@@ -1,7 +1,7 @@
-import { AbstractRule } from '../Abstract/AbstractRule.js';
-import type { EvaluationContext } from '../Types/EvaluationContext.type.js';
-import type { RuleResult } from '../Types/RuleResult.type.js';
-import { RuleType } from '../Types/RuleType.enum.js';
+import { AbstractRule } from '../Abstract/AbstractRule';
+import type { EvaluationContext } from '../Types/EvaluationContext.type';
+import type { RuleResult } from '../Types/RuleResult.type';
+import { RuleType } from '../Types/RuleType.enum';
 
 interface AttributeMatchConfig {
   requiredAttributes: Record<string, string>;

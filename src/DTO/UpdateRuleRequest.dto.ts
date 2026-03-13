@@ -1,4 +1,4 @@
-import { RuleType } from '../RuleEngine/Types/RuleType.enum.js';
+import { RuleType } from '../RuleEngine/Types/RuleType.enum';
 
 export default interface UpdateRuleRequest {
   ruleType?: RuleType;

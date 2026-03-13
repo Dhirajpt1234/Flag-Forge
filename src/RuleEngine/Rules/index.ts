@@ -1,4 +1,4 @@
-export { UserAllowListRule } from './UserAllowListRule.js';
-export { AttributeMatchRule } from './AttributeMatchRule.js';
-export { PercentageRolloutRule } from './PercentageRolloutRule.js';
-export { DefaultRule } from './DefaultRule.js';
+export { UserAllowListRule } from './UserAllowListRule';
+export { AttributeMatchRule } from './AttributeMatchRule';
+export { PercentageRolloutRule } from './PercentageRolloutRule';
+export { DefaultRule } from './DefaultRule';

@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import type { default as IRuleService } from '../Service/IRuleService.js';
-import type { default as RuleController } from '../Controller/Rule.controller.js';
+import type { default as IRuleService } from '../Service/IRuleService';
+import type { default as RuleController } from '../Controller/Rule.controller';
 
 export const createRuleRoutes = (
   service: IRuleService,

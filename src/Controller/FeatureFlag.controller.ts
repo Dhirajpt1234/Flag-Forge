@@ -1,11 +1,11 @@
 import type { Request, Response } from 'express';
-import type { default as IFeatureFlagService } from '../Service/IFeatureFlag.service.js';
-import type { default as CreateFeatureFlagDTO } from '../DTO/CreateFeatureFlagRequest.dto.js';
-import type { default as UpdateFeatureFlagDTO } from '../DTO/UpdateFeatureFlagRequest.dto.js';
-import environment from '../Enums/environment.js';
-import { ValidationError, asyncHandler } from '../Middleware/exceptionHandler.middleware.js';
-import logger from '../Utils/logger.util.js';
-import { sendSuccessResponse, sendErrorResponse } from '../Utils/ApiResponse.util.js';
+import type { default as IFeatureFlagService } from '../Service/IFeatureFlag.service';
+import type { default as CreateFeatureFlagDTO } from '../DTO/CreateFeatureFlagRequest.dto';
+import type { default as UpdateFeatureFlagDTO } from '../DTO/UpdateFeatureFlagRequest.dto';
+import environment from '../Enums/environment';
+import { ValidationError, asyncHandler } from '../Middleware/exceptionHandler.middleware';
+import logger from '../Utils/logger.util';
+import { sendSuccessResponse, sendErrorResponse } from '../Utils/ApiResponse.util';
 
 export default class FeatureFlagController {
   constructor(private featureFlagService: IFeatureFlagService) { }

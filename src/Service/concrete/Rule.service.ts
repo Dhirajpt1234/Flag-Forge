@@ -1,16 +1,16 @@
-import type { default as IRuleService } from '../IRuleService.js';
-import type { default as CreateRuleRequest } from '../../DTO/CreateRuleRequest.dto.js';
-import type { default as UpdateRuleRequest } from '../../DTO/UpdateRuleRequest.dto.js';
-import type { default as RuleResponse } from '../../DTO/RuleResponse.dto.js';
-import type { Environment } from '../IRuleService.js';
-import type { RuleDefinitionData } from '../../Repository/IRuleDefinition.repository.js';
-import type { default as IFeatureFlagRepository } from '../../Repository/IFeatureFlag.repository.js';
-import RuleDefinitionRepository from '../../Repository/concrete/RuleDefinition.repository.js';
-import { RuleValidator } from '../../Utils/ruleValidation.util.js';
-import { NotFoundError, ValidationError } from '../../Middleware/exceptionHandler.middleware.js';
-import logger from '../../Utils/logger.util.js';
-import environment from '../../Enums/environment.js';
-import EvaluationService from './Evaluation.service.js';
+import type { default as IRuleService } from '../IRuleService';
+import type { default as CreateRuleRequest } from '../../DTO/CreateRuleRequest.dto';
+import type { default as UpdateRuleRequest } from '../../DTO/UpdateRuleRequest.dto';
+import type { default as RuleResponse } from '../../DTO/RuleResponse.dto';
+import type { Environment } from '../IRuleService';
+import type { RuleDefinitionData } from '../../Repository/IRuleDefinition.repository';
+import type { default as IFeatureFlagRepository } from '../../Repository/IFeatureFlag.repository';
+import RuleDefinitionRepository from '../../Repository/concrete/RuleDefinition.repository';
+import { RuleValidator } from '../../Utils/ruleValidation.util';
+import { NotFoundError, ValidationError } from '../../Middleware/exceptionHandler.middleware';
+import logger from '../../Utils/logger.util';
+import environment from '../../Enums/environment';
+import EvaluationService from './Evaluation.service';
 
 export default class RuleService implements IRuleService {
   private ruleDefinitionRepository: RuleDefinitionRepository;

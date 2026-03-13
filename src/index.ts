@@ -1,20 +1,20 @@
 import express from 'express';
 import dotenv from 'dotenv';
-import DatabaseClient from './Database/db.client.js';
-import routerLogger from './Middleware/routesLogger.middleware.js';
-import { createFeatureFlagRoutes } from './Routes/featureFlag.routes.js';
-import { createRuleRoutes } from './Routes/rule.routes.js';
-import { createEvaluationRoutes } from './Routes/evaluation.routes.js';
-import FeatureFlagService from './Service/concrete/FeatureFlag.service.js';
-import FeatureFlagController from './Controller/FeatureFlag.controller.js';
-import FeatureFlagRepository from './Repository/concrete/FeatureFlag.repository.js';
-import RuleService from './Service/concrete/Rule.service.js';
-import RuleController from './Controller/Rule.controller.js';
-import EvaluationService from './Service/concrete/Evaluation.service.js';
-import EvaluationController from './Controller/Evaluation.controller.js';
-import AuditService from './Service/concrete/Audit.service.js';
-import { exceptionHandler } from './Middleware/exceptionHandler.middleware.js';
-import logger from './Utils/logger.util.js'
+import DatabaseClient from './Database/db.client';
+import routerLogger from './Middleware/routesLogger.middleware';
+import { createFeatureFlagRoutes } from './Routes/featureFlag.routes';
+import { createRuleRoutes } from './Routes/rule.routes';
+import { createEvaluationRoutes } from './Routes/evaluation.routes';
+import FeatureFlagService from './Service/concrete/FeatureFlag.service';
+import FeatureFlagController from './Controller/FeatureFlag.controller';
+import FeatureFlagRepository from './Repository/concrete/FeatureFlag.repository';
+import RuleService from './Service/concrete/Rule.service';
+import RuleController from './Controller/Rule.controller';
+import EvaluationService from './Service/concrete/Evaluation.service';
+import EvaluationController from './Controller/Evaluation.controller';
+import AuditService from './Service/concrete/Audit.service';
+import { exceptionHandler } from './Middleware/exceptionHandler.middleware';
+import logger from './Utils/logger.util'
 
 // Load environment variables
 dotenv.config();

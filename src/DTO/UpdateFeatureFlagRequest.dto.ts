@@ -1,4 +1,4 @@
-import environment from '../Enums/environment.js';
+import environment from '../Enums/environment';
 
 export default interface UpdateFeatureFlagDTO {
   key?: string;

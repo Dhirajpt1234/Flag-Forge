@@ -1,7 +1,7 @@
-import type { Rule } from '../Interfaces/Rule.interface.js';
-import type { EvaluationContext } from '../Types/EvaluationContext.type.js';
-import type { RuleResult } from '../Types/RuleResult.type.js';
-import { RuleFactoryImpl } from '../Factory/RuleFactoryImpl.js';
+import type { Rule } from '../Interfaces/Rule.interface';
+import type { EvaluationContext } from '../Types/EvaluationContext.type';
+import type { RuleResult } from '../Types/RuleResult.type';
+import { RuleFactoryImpl } from '../Factory/RuleFactoryImpl';
 
 interface RuleDefinition {
   ruleType: string;

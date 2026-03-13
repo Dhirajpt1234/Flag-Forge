@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import type { IDatabaseClient } from './IDatabase.client.js';
+import type { IDatabaseClient } from './IDatabase.client';
 
 export class PrismaDatabaseClient implements IDatabaseClient {
   private static instance: PrismaDatabaseClient;

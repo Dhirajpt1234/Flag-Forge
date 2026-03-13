@@ -1,11 +1,11 @@
 import type { Request, Response } from 'express';
-import type { default as IEvaluationService } from '../Service/IEvaluationService.js';
-import type { Environment } from '../Service/IRuleService.js';
-import type { RuleResult } from '../RuleEngine/Types/RuleResult.type.js';
-import { ValidationError, asyncHandler } from '../Middleware/exceptionHandler.middleware.js';
-import logger from '../Utils/logger.util.js';
-import { sendSuccessResponse, sendErrorResponse } from '../Utils/ApiResponse.util.js';
-import environment from '../Enums/environment.js';
+import type { default as IEvaluationService } from '../Service/IEvaluationService';
+import type { Environment } from '../Service/IRuleService';
+import type { RuleResult } from '../RuleEngine/Types/RuleResult.type';
+import { ValidationError, asyncHandler } from '../Middleware/exceptionHandler.middleware';
+import logger from '../Utils/logger.util';
+import { sendSuccessResponse, sendErrorResponse } from '../Utils/ApiResponse.util';
+import environment from '../Enums/environment';
 
 export default class EvaluationController {
   constructor(private evaluationService: IEvaluationService) { }

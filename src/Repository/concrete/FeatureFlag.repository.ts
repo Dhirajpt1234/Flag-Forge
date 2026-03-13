@@ -1,7 +1,7 @@
-import type { default as IFeatureFlagRepository } from '../IFeatureFlag.repository.js';
-import environment from '../../Enums/environment.js';
-import type FeatureFlag from '../../DTO/FeatureFlag.dto.js';
-import DatabaseClient from '../../Database/db.client.js';
+import type { default as IFeatureFlagRepository } from '../IFeatureFlag.repository';
+import environment from '../../Enums/environment';
+import type FeatureFlag from '../../DTO/FeatureFlag.dto';
+import DatabaseClient from '../../Database/db.client';
 
 export default class FeatureFlagRepository implements IFeatureFlagRepository {
   private dbClient: DatabaseClient;

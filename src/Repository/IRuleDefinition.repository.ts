@@ -1,4 +1,4 @@
-import { RuleType } from '../RuleEngine/Types/RuleType.enum.js';
+import { RuleType } from '../RuleEngine/Types/RuleType.enum';
 
 export interface RuleDefinitionData {
   id: string;

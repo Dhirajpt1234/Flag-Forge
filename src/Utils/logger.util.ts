@@ -1,204 +1,148 @@
-import winston from 'winston'
-import { getTraceMetadata } from './trace.util.js'
-import { LOG_LEVEL, APP_NAME  } from "../config/properties.js"
+import fs from "fs";
+import path from "path";
+import pino from "pino";
+import { APP_NAME, LOG_LEVEL } from "../config/properties";
 
-// Get environment variables
-const IS_PRODUCTION = process.env.NODE_ENV === 'production'
+/*
+---------------------------------------
+Log directory
+---------------------------------------
+*/
 
-// Custom format to include trace context in logs
-const traceFormat = winston.format((info) => {
-  const traceMetadata = getTraceMetadata()
-  
-  // Add trace metadata to log entry
-  if (traceMetadata && Object.keys(traceMetadata).length > 0) {
-    info.trace = traceMetadata
-  }
-  
-  return info
-})
+const logDir = path.join(process.cwd(), "logs");
 
-const logger = winston.createLogger({
-  level: LOG_LEVEL,
-  format: winston.format.combine(
-    winston.format.timestamp(),
-    winston.format.errors({ stack: true }),
-    traceFormat(), // Add trace context to all logs
-    winston.format.json()
-  ),
-  defaultMeta: { service: APP_NAME },
-  transports: [
-    new winston.transports.File({ filename: 'logs/error.log', level: 'error' }),
-    new winston.transports.File({ filename: 'logs/combined.log' })
-  ]
-})
-
-// If we're not in production, log to the console as well
-if (!IS_PRODUCTION) {
-  logger.add(
-    new winston.transports.Console({
-      format: winston.format.combine(
-        winston.format.colorize(),
-        traceFormat(),
-        winston.format.printf(({ level, message, timestamp, trace, ...meta }) => {
-          let output = `${timestamp} [${level}]: ${message}`
-          
-          // Add trace info to console output for better visibility
-          if (trace && typeof trace === 'object' && 'traceId' in trace) {
-            output += ` [trace:${trace.traceId}]`
-            if ('spanId' in trace) {
-              output += ` [span:${trace.spanId}]`
-            }
-          }
-          
-          // Add other metadata
-          if (Object.keys(meta).length > 0) {
-            output += ` ${JSON.stringify(meta)}`
-          }
-          
-          return output
-        })
-      )
-    })
-  )
+if (!fs.existsSync(logDir)) {
+  fs.mkdirSync(logDir);
 }
 
-/**
- * Safely serializes an error object to avoid circular reference issues
- * @param error The error to serialize
- * @returns Safe error object with message and stack
- */
-const safeSerializeError = (error: unknown): { error: string; stack?: string } => {
-  if (error instanceof Error) {
-    return {
-      error: error.message,
-      ...(error.stack && { stack: error.stack })
+const readableStream = fs.createWriteStream(
+  path.join(logDir, `${APP_NAME}.log`),
+  { flags: "a" }
+);
+
+/*
+---------------------------------------
+JSON Logger (for machines)
+---------------------------------------
+*/
+
+const jsonLogger = pino(
+  {
+    level: LOG_LEVEL,
+  },
+  pino.destination({
+    dest: path.join(logDir, `${APP_NAME}.json.log`),
+    sync: false
+  })
+);
+
+/*
+---------------------------------------
+Caller detection
+---------------------------------------
+*/
+
+function getCaller(): string {
+  const stack = new Error().stack?.split("\n") || [];
+
+  for (const line of stack) {
+    if (
+      line.includes(".ts") &&
+      !line.includes("logger.util") &&
+      !line.includes("node_modules") &&
+      !line.includes("exceptionHandler.middleware") &&
+      !line.includes("/Middleware/")
+    ) {
+      const normalized = line.trim();
+
+      const matchWithParens = normalized.match(/\((.*\.ts):(\d+):(\d+)\)/);
+      const matchWithoutParens = normalized.match(/at\s+(?:async\s+)?(.*\.ts):(\d+):(\d+)$/);
+      const match = matchWithParens || matchWithoutParens;
+
+      if (!match) continue;
+
+      const file = match[1].split("/").pop();
+      const lineNo = match[2];
+
+      return `${file}:${lineNo}`;
     }
   }
-  
-  // Handle non-Error objects
-  try {
-    return {
-      error: String(error)
-    }
-  } catch {
-    return {
-      error: 'Unknown error occurred'
-    }
-  }
+
+  return "unknownFileName";
 }
 
-// Enhanced logger with trace-aware methods
-class TracedLogger {
-  private readonly winston: winston.Logger
+/*
+---------------------------------------
+Formatting
+---------------------------------------
+*/
 
-  constructor(winstonLogger: winston.Logger) {
-    this.winston = winstonLogger
-  }
+function formatLog(level: string, message: string, data?: any) {
+  const time = new Date().toISOString();
+  const caller = getCaller();
 
-  error(message: string, meta?: any): void {
-    const traceMetadata = getTraceMetadata()
-    let payload = meta
+  const dataStr = data ? JSON.stringify(data) : "";
 
-    // If an Error is passed directly, serialize it
-    if (meta instanceof Error) {
-      payload = {
-        error: meta.message,
-        stack: meta.stack
-      }
-    } else if (meta !== undefined && meta !== null) {
-      // If error is nested under meta.error and is an Error, serialize it
-      if (meta.error instanceof Error) {
-        const { error, ...rest } = meta
-        payload = {
-          ...rest,
-          error: error.message,
-          stack: error.stack
-        }
-      }
-    }
-
-    this.winston.error(message, { ...payload, ...traceMetadata })
-  }
-
-  /**
-   * Safely logs an error with proper serialization to avoid circular references
-   * @param message Error message
-   * @param error The error object to log
-   * @param meta Additional metadata
-   */
-  safeError(message: string, error: unknown, meta?: any): void {
-    const traceMetadata = getTraceMetadata()
-    const safeError = safeSerializeError(error)
-    this.winston.error(message, { ...meta, ...safeError, ...traceMetadata })
-  }
-
-  warn(message: string, meta?: any): void {
-    const traceMetadata = getTraceMetadata()
-    this.winston.warn(message, { ...meta, ...traceMetadata })
-  }
-
-  info(message: string, meta?: any): void {
-    const traceMetadata = getTraceMetadata()
-    this.winston.info(message, { ...meta, ...traceMetadata })
-  }
-
-  debug(message: string, meta?: any): void {
-    const traceMetadata = getTraceMetadata()
-    this.winston.debug(message, { ...meta, ...traceMetadata })
-  }
-
-  startOperation(operationName: string, meta?: any): void {
-    const traceMetadata = getTraceMetadata()
-    this.winston.info(`Starting operation: ${operationName}`, {
-      ...meta,
-      ...traceMetadata,
-      operationName,
-      operationStatus: 'start'
-    })
-  }
-
-  endOperation(operationName: string, duration: number, meta?: any): void {
-    const traceMetadata = getTraceMetadata()
-    this.winston.info(`Completed operation: ${operationName}`, {
-      ...meta,
-      ...traceMetadata,
-      operationName,
-      operationStatus: 'complete',
-      duration
-    })
-  }
-
-  failOperation(operationName: string, error: Error, meta?: any): void {
-    const traceMetadata = getTraceMetadata()
-    this.winston.error(`Failed operation: ${operationName}`, {
-      ...meta,
-      ...traceMetadata,
-      operationName,
-      operationStatus: 'failed',
-      error: error.message,
-      stack: error.stack
-    })
-  }
-
-  logApiCall(method: string, url: string, statusCode: number, duration: number, meta?: any): void {
-    const traceMetadata = getTraceMetadata()
-    const level = statusCode >= 400 ? 'error' : 'info'
-    
-    this.winston[level](`External API call: ${method} ${url}`, {
-      ...meta,
-      ...traceMetadata,
-      apiCall: {
-        method,
-        url,
-        statusCode,
-        duration
-      }
-    })
-  }
-
-  getWinstonLogger(): winston.Logger {
-    return this.winston
-  }
+  return `[${time}] [${level.toUpperCase()}] [${caller}] ${message} ${dataStr}`;
 }
 
-export default new TracedLogger(logger)
+/*
+---------------------------------------
+Writer
+---------------------------------------
+*/
+
+function write(level: "info" | "debug" | "warn" | "error", message: string, data?: any) {
+  const formatted = formatLog(level, message, data);
+
+  /*
+  console readable
+  */
+
+  if(LOG_LEVEL !== "PROD") {
+    console.log(formatted);
+  }
+
+  /*
+  readable log file
+  */
+
+  readableStream.write(formatted + "\n");
+
+  /*
+  structured json log
+  */
+
+  jsonLogger[level]({
+    message,
+    data,
+    caller: getCaller(),
+    timestamp: new Date().toISOString()
+  });
+}
+
+/*
+---------------------------------------
+Logger API
+---------------------------------------
+*/
+
+export default {
+
+  info(message: string, data?: any) {
+    write("info", message, data);
+  },
+
+  debug(message: string, data?: any) {
+    write("debug", message, data);
+  },
+
+  warn(message: string, data?: any) {
+    write("warn", message, data);
+  },
+
+  error(message: string, data?: any) {
+    write("error", message, data);
+  }
+
+};
