@@ -47,6 +47,16 @@ export class DatabaseError extends Error implements ApiError {
   }
 }
 
+export class UnauthorizedError extends Error implements ApiError {
+  statusCode = 401;
+  code = 'UNAUTHORIZED_ERROR';
+  
+  constructor(message: string) {
+    super(message);
+    this.name = 'UnauthorizedError';
+  }
+}
+
 export const exceptionHandler = (
   error: ApiError,
   req: Request,

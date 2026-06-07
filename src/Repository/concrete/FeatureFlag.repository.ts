@@ -10,13 +10,13 @@ export default class FeatureFlagRepository implements IFeatureFlagRepository {
     this.dbClient = DatabaseClient.getInstance();
   }
 
-  async save(flag: FeatureFlag): Promise<FeatureFlag> {
-    // get the singleton instance of the database client
+  async save(flag: FeatureFlag, organizationId: string): Promise<FeatureFlag> {
     const db = DatabaseClient.getPrismaInstance();
     const dbClient = db.getPrismaClient();
 
     const result = await dbClient.featureFlag.create({
       data: {
+        organizationId,
         key: flag.key,
         name: flag.name,
         description: flag.description,
@@ -31,61 +31,58 @@ export default class FeatureFlagRepository implements IFeatureFlagRepository {
     return this.mapPrismaToFeatureFlag(result);
   }
 
-  async findAll(env: typeof environment[keyof typeof environment]): Promise<FeatureFlag[]> {
+  async findAll(env: typeof environment[keyof typeof environment], organizationId: string): Promise<FeatureFlag[]> {
     const db = DatabaseClient.getPrismaInstance();
     const dbClient = db.getPrismaClient();
 
     const results = await dbClient.featureFlag.findMany({
-      where: { environment: env, deleted: false },
+      where: { environment: env, organizationId, deleted: false },
       orderBy: { createdAt: 'desc' }
     });
-
-    console.log('results', results);
 
     return results.map((result: any) => this.mapPrismaToFeatureFlag(result));
   }
 
-  async findByKeyAndEnvironment(key: string, env: typeof environment[keyof typeof environment]): Promise<FeatureFlag | null> {
+  async findByKeyAndEnvironment(key: string, env: typeof environment[keyof typeof environment], organizationId: string): Promise<FeatureFlag | null> {
     const db = DatabaseClient.getPrismaInstance();
     const dbClient = db.getPrismaClient();
 
-    // Use findUnique with the composite key, then filter by deleted status
     const result = await dbClient.featureFlag.findUnique({
-      where: { key_environment: { key: key, environment: env } }
+      where: { organizationId_key_environment: { organizationId, key, environment: env } }
     });
 
-    // Return only if not deleted
     return result && !result.deleted ? this.mapPrismaToFeatureFlag(result) : null;
   }
 
-  async findByKey(key: string): Promise<FeatureFlag | null> {
+  async findByKey(key: string, organizationId: string): Promise<FeatureFlag | null> {
     const db = DatabaseClient.getPrismaInstance();
     const prisma = db.getPrismaClient();
     const result = await prisma.featureFlag.findFirst({
-      where: { key }
+      where: { key, organizationId }
     });
 
     return result ? this.mapPrismaToFeatureFlag(result) : null;
   }
 
-  async delete(key: string): Promise<void> {
+  async delete(key: string, organizationId: string): Promise<void> {
     const db = DatabaseClient.getPrismaInstance();
     const dbClient = db.getPrismaClient();
 
     await dbClient.featureFlag.updateMany({
       where: {
-        key: key,
+        key,
+        organizationId
       },
       data: { deleted: true }
     });
   }
 
-  async update(flag: FeatureFlag): Promise<FeatureFlag> {
+  async update(flag: FeatureFlag, organizationId: string): Promise<FeatureFlag> {
     const db = DatabaseClient.getPrismaInstance();
     const dbClient = db.getPrismaClient();
 
     const result = await dbClient.featureFlag.updateMany({
-      where: { key: flag.key },
+      where: { key: flag.key, organizationId },
       data: {
         description: flag.description,
         name: flag.name,
@@ -96,30 +93,24 @@ export default class FeatureFlagRepository implements IFeatureFlagRepository {
     return this.mapPrismaToFeatureFlag(result);
   }
 
-  async enableFlagForEnvironment(key: string, env: typeof environment[keyof typeof environment]) : Promise<FeatureFlag> {
+  async enableFlagForEnvironment(key: string, env: typeof environment[keyof typeof environment], organizationId: string): Promise<FeatureFlag> {
     const db = DatabaseClient.getPrismaInstance();
     const dbClient = db.getPrismaClient();
 
-    console.log('key', key);
-    console.log('env', env);
-
     const result = await dbClient.featureFlag.update({
-      where: { key_environment: { key: key, environment: env } },
+      where: { organizationId_key_environment: { organizationId, key, environment: env } },
       data: { enabled: true }
     });
 
     return this.mapPrismaToFeatureFlag(result);
   }
 
-  async disableFlagForEnvironment(key: string, env: typeof environment[keyof typeof environment]) : Promise<FeatureFlag> {
+  async disableFlagForEnvironment(key: string, env: typeof environment[keyof typeof environment], organizationId: string): Promise<FeatureFlag> {
     const db = DatabaseClient.getPrismaInstance();
     const dbClient = db.getPrismaClient();
 
-    console.log('key', key);
-    console.log('env', env);
-
     const result = await dbClient.featureFlag.update({
-      where: { key_environment: { key: key, environment: env } },
+      where: { organizationId_key_environment: { organizationId, key, environment: env } },
       data: { enabled: false }
     });
 
@@ -129,6 +120,7 @@ export default class FeatureFlagRepository implements IFeatureFlagRepository {
   private mapPrismaToFeatureFlag(prismaFlag: any): FeatureFlag {
     return {
       id: prismaFlag.id,
+      organizationId: prismaFlag.organizationId,
       key: prismaFlag.key,
       name: prismaFlag.name,
       description: prismaFlag.description,

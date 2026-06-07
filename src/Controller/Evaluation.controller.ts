@@ -1,6 +1,6 @@
 import type { Request, Response } from 'express';
-import type { default as IEvaluationService } from '../Service/IEvaluationService';
-import type { Environment } from '../Service/IRuleService';
+import type { default as IEvaluationService } from '../Service/IEvaluation.service';
+import type { Environment } from '../Service/IRule.service';
 import type { RuleResult } from '../RuleEngine/Types/RuleResult.type';
 import { ValidationError, asyncHandler } from '../Middleware/exceptionHandler.middleware';
 import logger from '../Utils/logger.util';

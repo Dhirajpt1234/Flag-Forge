@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import type { default as IEvaluationService } from '../Service/IEvaluationService';
+import type { default as IEvaluationService } from '../Service/IEvaluation.service';
 import type { default as EvaluationController } from '../Controller/Evaluation.controller';
 
 export const createEvaluationRoutes = (

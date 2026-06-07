@@ -1,8 +1,8 @@
-import type { default as IRuleService } from '../IRuleService';
+import type { default as IRuleService } from '../IRule.service';
 import type { default as CreateRuleRequest } from '../../DTO/CreateRuleRequest.dto';
 import type { default as UpdateRuleRequest } from '../../DTO/UpdateRuleRequest.dto';
 import type { default as RuleResponse } from '../../DTO/RuleResponse.dto';
-import type { Environment } from '../IRuleService';
+import type { Environment } from '../IRule.service';
 import type { RuleDefinitionData } from '../../Repository/IRuleDefinition.repository';
 import type { default as IFeatureFlagRepository } from '../../Repository/IFeatureFlag.repository';
 import RuleDefinitionRepository from '../../Repository/concrete/RuleDefinition.repository';
@@ -25,14 +25,12 @@ export default class RuleService implements IRuleService {
     }
   }
 
-  async createRule(flagKey: string, environment: Environment, ruleData: CreateRuleRequest): Promise<RuleResponse> {
-    logger.info('Creating rule', { flagKey, environment, ruleType: ruleData.ruleType });
-
-    // 1. Validate feature flag exists for given environment
-    await this.validateFeatureFlagExists(flagKey, environment);
-
+  async createRule(flagKey: string, environment: Environment, ruleData: CreateRuleRequest, organizationId: string): Promise<RuleResponse> {
+    logger.info('Creating rule', { flagKey, environment, ruleType: ruleData.ruleType, organizationId });
+ // 1. Validate feature flag exists for given environment
+    await this.validateFeatureFlagExists(flagKey, environment, organizationId);
     // 2. Get flag ID
-    const flagId = await this.getFlagId(flagKey, environment);
+    const flagId = await this.getFlagId(flagKey, environment, organizationId);
 
     // 3. Validate rule configuration
     RuleValidator.validateRuleConfig(ruleData.ruleType, ruleData.config);
@@ -83,19 +81,19 @@ export default class RuleService implements IRuleService {
     return this.mapToRuleResponse(ruleDefinition);
   }
 
-  async getRules(flagKey: string, environment: Environment): Promise<RuleResponse[]> {
-    logger.info('Fetching rules', { flagKey, environment });
+  async getRules(flagKey: string, environment: Environment, organizationId: string): Promise<RuleResponse[]> {
+    logger.info('Fetching rules', { flagKey, environment, organizationId });
 
-    const flagId = await this.getFlagId(flagKey, environment);
+    const flagId = await this.getFlagId(flagKey, environment, organizationId);
     const rules = await this.ruleDefinitionRepository.findByFlagIdAndEnvironment(flagId, environment);
 
-    logger.info('Rules retrieved successfully', { flagKey, environment, count: rules.length });
+    logger.info('Rules retrieved successfully', { flagKey, environment, organizationId, count: rules.length });
 
     return rules.map(rule => this.mapToRuleResponse(rule));
   }
 
-  async getRule(ruleId: string): Promise<RuleResponse> {
-    logger.info('Fetching rule by ID', { ruleId });
+  async getRule(ruleId: string, organizationId: string): Promise<RuleResponse> {
+    logger.info('Fetching rule by ID', { ruleId, organizationId });
 
     const rule = await this.ruleDefinitionRepository.findById(ruleId);
     
@@ -106,8 +104,8 @@ export default class RuleService implements IRuleService {
     return this.mapToRuleResponse(rule);
   }
 
-  async updateRule(ruleId: string, updates: UpdateRuleRequest): Promise<RuleResponse> {
-    logger.info('Updating rule', { ruleId, updates });
+  async updateRule(ruleId: string, updates: UpdateRuleRequest, organizationId: string): Promise<RuleResponse> {
+    logger.info('Updating rule', { ruleId, updates, organizationId });
 
     // 1. Check if rule exists
     const existingRule = await this.ruleDefinitionRepository.findById(ruleId);
@@ -167,8 +165,8 @@ export default class RuleService implements IRuleService {
 
 
   // TODO : check for soft delete or archieve delete.
-  async deleteRule(ruleId: string): Promise<void> {
-    logger.info('Deleting rule', { ruleId });
+  async deleteRule(ruleId: string, organizationId: string): Promise<void> {
+    logger.info('Deleting rule', { ruleId, organizationId });
 
     // 1. Check if rule exists
     const existingRule = await this.ruleDefinitionRepository.findById(ruleId);
@@ -202,15 +200,14 @@ export default class RuleService implements IRuleService {
     }
   }
 
-  async deleteRulesByFlag(flagKey: string, environment: Environment): Promise<void> {
-    logger.info('Deleting rules for flag', { flagKey, environment });
+  async deleteRulesByFlag(flagKey: string, environment: Environment, organizationId: string): Promise<void> {
+    logger.info('Deleting rules for flag', { flagKey, environment, organizationId });
 
-    const flagId = await this.getFlagId(flagKey, environment);
+    const flagId = await this.getFlagId(flagKey, environment, organizationId);
     await this.ruleDefinitionRepository.deleteByFlagIdAndEnvironment(flagId, environment);
 
-    logger.info('Rules deleted successfully', { flagKey, environment });
+    logger.info('Rules deleted successfully', { flagKey, environment, organizationId });
 
-    // Clear evaluation cache for this flag
     this.clearEvaluationCache(flagKey);
   }
 
@@ -318,16 +315,16 @@ export default class RuleService implements IRuleService {
     }
   }
 
-  private async validateFeatureFlagExists(flagKey: string, environment: Environment): Promise<void> {
-    const featureFlag = await this.featureFlagRepository.findByKeyAndEnvironment(flagKey, environment as any);
+  private async validateFeatureFlagExists(flagKey: string, environment: Environment, organizationId: string): Promise<void> {
+    const featureFlag = await this.featureFlagRepository.findByKeyAndEnvironment(flagKey, environment as any, organizationId);
     
     if (!featureFlag) {
       throw new NotFoundError(`Feature flag '${flagKey}' not found in environment '${environment}'`);
     }
   }
 
-  private async getFlagId(flagKey: string, environment: Environment): Promise<string> {
-    const featureFlag = await this.featureFlagRepository.findByKeyAndEnvironment(flagKey, environment as any);
+  private async getFlagId(flagKey: string, environment: Environment, organizationId: string): Promise<string> {
+    const featureFlag = await this.featureFlagRepository.findByKeyAndEnvironment(flagKey, environment as any, organizationId);
     
     if (!featureFlag) {
       throw new NotFoundError(`Feature flag '${flagKey}' not found in environment '${environment}'`);

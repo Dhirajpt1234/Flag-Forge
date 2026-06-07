@@ -1,6 +1,6 @@
 import type { EvaluationContext } from '../RuleEngine/Types/EvaluationContext.type';
 import type { RuleResult } from '../RuleEngine/Types/RuleResult.type';
-import type { Environment } from './IRuleService';
+import type { Environment } from './IRule.service';
 
 export default interface IEvaluationService {
   evaluateFlag(flagKey: string, environment: Environment, userId: string, attributes?: Record<string, string>): Promise<boolean>;

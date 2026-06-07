@@ -3,19 +3,19 @@ import environment from '../Enums/environment';
 
 
 export default interface IFeatureFlagRepository {
-  save(flag: FeatureFlag): Promise<FeatureFlag>;
+  save(flag: FeatureFlag, organizationId: string): Promise<FeatureFlag>;
 
-  findAll(env: typeof environment[keyof typeof environment]): Promise<FeatureFlag[]>;
+  findAll(env: typeof environment[keyof typeof environment], organizationId: string): Promise<FeatureFlag[]>;
 
-  findByKey(key: string): Promise<FeatureFlag | null>;
+  findByKey(key: string, organizationId: string): Promise<FeatureFlag | null>;
 
-  findByKeyAndEnvironment(key: string, env: typeof environment[keyof typeof environment]): Promise<FeatureFlag | null>;
+  findByKeyAndEnvironment(key: string, env: typeof environment[keyof typeof environment], organizationId: string): Promise<FeatureFlag | null>;
 
-  delete(key: string): Promise<void>;
+  delete(key: string, organizationId: string): Promise<void>;
 
-  update(flag: FeatureFlag): Promise<FeatureFlag>;
+  update(flag: FeatureFlag, organizationId: string): Promise<FeatureFlag>;
 
-  enableFlagForEnvironment(key : string , env : typeof environment[keyof typeof environment]) : Promise<FeatureFlag>;
+  enableFlagForEnvironment(key: string, env: typeof environment[keyof typeof environment], organizationId: string): Promise<FeatureFlag>;
 
-  disableFlagForEnvironment(key : string , env : typeof environment[keyof typeof environment]) : Promise<FeatureFlag>;
+  disableFlagForEnvironment(key: string, env: typeof environment[keyof typeof environment], organizationId: string): Promise<FeatureFlag>;
 }

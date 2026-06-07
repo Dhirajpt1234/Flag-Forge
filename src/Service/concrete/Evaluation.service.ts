@@ -1,7 +1,7 @@
-import type { default as IEvaluationService } from '../IEvaluationService';
+import type { default as IEvaluationService } from '../IEvaluation.service';
 import type { EvaluationContext } from '../../RuleEngine/Types/EvaluationContext.type';
 import type { RuleResult } from '../../RuleEngine/Types/RuleResult.type';
-import type { Environment } from '../IRuleService';
+import type { Environment } from '../IRule.service';
 import { RuleEngineService } from './RuleEngine.service';
 import type { default as IFeatureFlagRepository } from '../../Repository/IFeatureFlag.repository';
 import logger from '../../Utils/logger.util';

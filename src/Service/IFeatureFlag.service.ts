@@ -5,11 +5,11 @@ import environment from '../Enums/environment';
 import type FeatureFlag from '../DTO/FeatureFlag.dto';
 
 export default interface IFeatureFlagService {
-  createFlag(dto: CreateFeatureFlagDTO): Promise<FeatureFlagResponseDTO>;
-  getFlag(key: string, env: typeof environment[keyof typeof environment]): Promise<FeatureFlagResponseDTO>;
-  listFlags(env: typeof environment[keyof typeof environment]): Promise<FeatureFlagResponseDTO[]>;
-  updateFlag(key: string, dto: UpdateFeatureFlagDTO): Promise<FeatureFlagResponseDTO>;
-  deleteFlag(key: string): Promise<void>;
-  enableFlag(key: string, env: typeof environment[keyof typeof environment]): Promise<FeatureFlag>;
-  disableFlag(key: string, env: typeof environment[keyof typeof environment]): Promise<FeatureFlag>;
+  createFlag(dto: CreateFeatureFlagDTO, organizationId: string): Promise<FeatureFlagResponseDTO>;
+  getFlag(key: string, env: typeof environment[keyof typeof environment], organizationId: string): Promise<FeatureFlagResponseDTO>;
+  listFlags(env: typeof environment[keyof typeof environment], organizationId: string): Promise<FeatureFlagResponseDTO[]>;
+  updateFlag(key: string, dto: UpdateFeatureFlagDTO, organizationId: string): Promise<FeatureFlagResponseDTO>;
+  deleteFlag(key: string, organizationId: string): Promise<void>;
+  enableFlag(key: string, env: typeof environment[keyof typeof environment], organizationId: string): Promise<FeatureFlag>;
+  disableFlag(key: string, env: typeof environment[keyof typeof environment], organizationId: string): Promise<FeatureFlag>;
 }

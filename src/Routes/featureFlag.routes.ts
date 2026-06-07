@@ -1,12 +1,20 @@
 import { Router } from 'express';
 import type { default as IFeatureFlagService } from '../Service/IFeatureFlag.service';
 import type { default as FeatureFlagController } from '../Controller/FeatureFlag.controller';
+import { createAuthMiddleware } from '../Middleware/auth.middleware';
+import { createOrgContextMiddleware } from '../Middleware/orgContext.middleware';
 
 export const createFeatureFlagRoutes = (
   service: IFeatureFlagService,
   controller: FeatureFlagController
 ): Router => {
   const router = Router();
+  const authMiddleware = createAuthMiddleware();
+  const orgContextMiddleware = createOrgContextMiddleware();
+
+  // Apply auth and org context middleware to all routes
+  router.use(authMiddleware);
+  router.use(orgContextMiddleware);
 
   // POST /flags - Create a new feature flag
   router.post('/flags', controller.createFlag.bind(controller));

@@ -1,12 +1,20 @@
 import { Router } from 'express';
-import type { default as IRuleService } from '../Service/IRuleService';
+import type { default as IRuleService } from '../Service/IRule.service';
 import type { default as RuleController } from '../Controller/Rule.controller';
+import { createAuthMiddleware } from '../Middleware/auth.middleware';
+import { createOrgContextMiddleware } from '../Middleware/orgContext.middleware';
 
 export const createRuleRoutes = (
   service: IRuleService,
   controller: RuleController
 ): Router => {
   const router = Router();
+  const authMiddleware = createAuthMiddleware();
+  const orgContextMiddleware = createOrgContextMiddleware();
+
+  // Apply auth and org context middleware to all routes
+  router.use(authMiddleware);
+  router.use(orgContextMiddleware);
 
   // POST /:flagKey/rules - Create a new rule for a feature flag
   // Requires query param: environment
